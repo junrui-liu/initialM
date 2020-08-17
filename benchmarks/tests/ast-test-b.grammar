@@ -1,0 +1,157 @@
+// This is the skeleton for AST benchmark
+
+traversal fuse {
+    case CProgram {
+
+    }
+    case CFunction {
+
+    }
+
+    // assignment series
+    case AssignmentStatement {
+
+    }
+    case IfStatement {
+
+    }
+    case NopStatement {
+
+    }
+    case IncrStatement {
+
+    }
+    case DecrStatement {
+
+    }
+
+    // expression series
+    case ConstantExpression {
+
+    }
+    case BinaryExpression {
+
+    }
+    case VarRefExpression {
+
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface Program {
+    
+}
+class CProgram : Program {
+    children {
+        first_function : [Function];
+    }
+    rules {
+    }
+}
+
+// ============================== //
+// ========== Function ========== //
+// ============================== //
+
+interface Function {
+    
+}
+class CFunction : Function {
+    children {
+        next : [Function];
+        first_statement : [Statement];
+    }
+    rules {
+    }
+}
+
+// =============================== //
+// ========== Statement ========== //
+// =============================== //
+
+interface Statement {
+    // 0: ASSIGNMENT, 1: IF, 2: NOP, 3: INCR, 4: DECR
+    output statement_type : int;
+
+    // ==== based on different statement_type, the following attributes are enabled accordingly ==== //
+    // 0: ASSIGNMENT, 3: INCR, 4: DECR
+    input var_id : int; // expanded LHS id, originally it's a VarRefExpression
+
+}
+class AssignmentStatement : Statement {
+    children {
+        assigned_expr : [Expression];
+    }
+    rules {
+    }
+}
+class IfStatement : Statement {
+    children {
+        condition : [Expression];
+        then_first_statement : [Statement];
+        else_first_statement : [Statement];
+    }
+    rules {
+    }
+}
+class NopStatement : Statement {
+    children {
+    }
+    rules {
+    }
+}
+class IncrStatement : Statement {
+    children {
+    }
+    rules {
+    }
+}
+class DecrStatement : Statement {
+    children {
+    }
+    rules {
+    }
+}
+
+// ================================ //
+// ========== Expression ========== //
+// ================================ //
+
+interface Expression {
+    // 0: CONSTANT, 1: BINARY, 2: VARREF
+    output expression_type : int;
+
+    // ==== based on different expression_type, the following attributes are enabled accordingly ==== //
+    // 0: CONSTANT
+    input value : int;
+
+    // 1: BINARY
+    // binary also has structural LHS and RHS
+    input operator : int;
+
+    // 2: VARREF
+    input var_id : int;
+}
+class ConstantExpression : Expression {
+    children {
+    }
+    rules {
+    }
+}
+class BinaryExpression : Expression {
+    children {
+        lhs : [Expression];
+        rhs : [Expression];
+    }
+    rules {
+    }
+}
+class VarRefExpression : Expression {
+    children {
+    }
+    rules {
+    }
+}

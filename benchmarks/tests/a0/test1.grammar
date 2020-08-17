@@ -1,0 +1,18 @@
+traversal fuse {
+    case Group {
+        ??;
+        iterate a { recur a; }
+    }
+}
+interface Element {
+    output computedHeight : int;
+    input height : int;
+}
+class Group : Element {
+    children { 
+        a : [Element]; 
+    }
+    rules {
+        self.computedHeight := [0]{a.height : 0};
+    }
+}

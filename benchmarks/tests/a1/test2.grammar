@@ -1,0 +1,134 @@
+// first attempt to solve the oopsla example
+traversal fuse {
+    case RootInterface {
+        ??;
+        iterate l { ??; recur l; ??; }
+        ??;
+        iterate r { ??; recur r; ??; }
+        ??;
+        // iterate l { ??; recur l; ??; }
+        // ??;
+    }
+    case NodeInterface {
+        ??;
+        iterate l { ??; recur l; ??; }
+        ??;
+        iterate r { ??; recur r; ??; }
+        ??;
+        // iterate l { ??; recur l; ??; }
+        // ??;
+    }
+}
+
+interface Root {
+    // isLeaf property related
+    output id : bool;
+    output hasLeft : bool;
+    output hasRight : bool;
+    output isLeaf : bool;
+
+    // helper constants
+    output constantTrue : bool;
+    output constantNone : int;
+
+    // normal attributes
+    output v : int;
+    output x : int;
+    output y : int;
+    output tmpx : int;
+}
+class RootInterface : Root {
+    children {
+        l : [Node];
+        r : [Node];
+    }
+    rules {
+        // assign constants to constant variables
+        self.constantTrue := true;
+        self.constantNone := -9999;
+
+        // isLeaf property computation
+        self.id := true;
+        self.isLeaf := self.hasLeft && self.hasRight;
+        self.hasLeft := [0]{ l.id : !self.constantTrue };
+        self.hasRight := [0]{ r.id : !self.constantTrue };
+        
+        // normal attributes computation
+        // -----------------------------
+
+        self.y := self.v * 2;
+        self.v :=
+            if self.isLeaf then
+                1
+            else
+                [0]{ l.v : 1 } + [0]{ r.v : 1 };
+
+        // when root is leaf, the x attribute is not specified
+        // then let's make it None
+        self.x :=
+            if self.isLeaf then
+                self.tmpx
+            else
+                self.v;
+
+        self.tmpx := self.constantNone;
+        l.tmpx := self.x + 2;
+        r.tmpx := self.constantNone;
+    }
+}
+
+interface Node {
+
+    // isLeaf property related
+    output id : bool;
+    output hasLeft : bool;
+    output hasRight : bool;
+    output isLeaf : bool;
+
+    // helper constants
+    output constantTrue : bool;
+    output constantNone : int;
+
+    // normal attributes
+    output v : int;
+    output x : int;
+    output y : int;
+    output tmpx : int;
+
+}
+class NodeInterface : Node {
+    children {
+        l : [Node];
+        r : [Node];
+    }
+    rules {
+        // assign constants to constant variables
+        self.constantTrue := true;
+        self.constantNone := -9999;
+
+        // isLeaf property computation
+        self.id := true;
+        self.isLeaf := self.hasLeft && self.hasRight;
+        self.hasLeft := [0]{ l.id : !self.constantTrue };
+        self.hasRight := [0]{ r.id : !self.constantTrue };
+        
+        // normal attributes computation
+        // -----------------------------
+
+        self.y := self.v * 2;
+        self.v :=
+            if self.isLeaf then
+                1
+            else
+                [0]{ l.v : 1 } + [0]{ r.v : 1 };
+
+        l.tmpx := self.x + 2;
+        r.tmpx := self.constantNone;
+
+        self.x :=
+            if self.isLeaf then
+                self.tmpx
+            else
+                self.v;
+    }
+}

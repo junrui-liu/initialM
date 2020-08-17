@@ -1,0 +1,65 @@
+traversal fuse {
+    case Group {
+        ??;
+        iterate l { ??; recur l; ??; }
+        iterate r { ??; recur r; ??; }
+        ??;
+        iterate l { ??; recur l; ??; }
+        iterate r { ??; recur r; ??; }
+        ??;
+    }
+}
+interface Element {
+    output v : int;
+    output tmpx : int;
+    output x : int;
+    output y : int;
+}
+class Group : Element {
+    children {
+        l : [Element];
+        r : [Element];
+    }
+    functions {
+        do1 : {
+            self.v := 
+                if isLeaf then
+                    1
+                else
+                    l.v + r.v;
+        }
+        do2 : {
+            self.y := self.v * 2;
+            self.x :=
+                if isLeaf then
+                    self.tmpx
+                else
+                    self.v;
+            l.tmpx :=
+                if isLeaf then
+                    9999
+                else
+                    self.x + 2;
+        }
+        do1-do2 : {
+            // do1
+            self.v := 
+                if isLeaf then
+                    1
+                else
+                    l.v + r.v;
+            // do2
+            self.y := self.v * 2;
+            self.x :=
+                if isLeaf then
+                    self.tmpx
+                else
+                    self.v;
+            l.tmpx :=
+                if isLeaf then
+                    9999
+                else
+                    self.x + 2;
+        }
+    }
+}

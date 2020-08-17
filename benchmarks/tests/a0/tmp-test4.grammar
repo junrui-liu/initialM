@@ -1,0 +1,58 @@
+traversal fuse {
+    case Group {
+        iterate leftChild { recur leftChild; }
+        iterate rightChild { recur rightChild; }
+        ??;
+        // adding this will cause error
+        // iterate rightChild { recur rightChild; }
+    }
+}
+interface Element {
+    output storedValue : int;
+    output xValue : int;
+    output yValue : int;
+    input isLeaf : bool;
+    input do1 : bool;
+    input do2 : bool;
+}
+class Group : Element {
+    children { 
+        leftChild : [Element];
+        rightChild : [Element];
+    }
+    rules {
+
+        self.storedValue :=
+            if self.do1 then
+                if self.isLeaf then
+                    1
+                else
+                    [0]{leftChild.storedValue : -1} + [0]{leftChild.storedValue : -1}
+            else
+                -1;
+
+        self.yValue := 
+            if self.do2 then
+                self.storedValue * 2
+            else
+                -1;
+
+        self.xValue := 
+            if self.do2 then
+                if self.isLeaf then
+                    -1
+                else
+                    self.storedValue
+            else
+                -1;
+
+        leftChild.xValue :=
+            if self.do2 then
+                if self.isLeaf then
+                    -1
+                else
+                    self.xValue + 2
+            else
+                -1;
+    }
+}

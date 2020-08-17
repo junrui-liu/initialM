@@ -1,6 +1,7 @@
 // mini example that causes big memory allocation
 // run it with: 
 // ./run.rkt --root Function fuse benchmarks/tests/memory-bug.grammar
+// uncomment `next : [Statement];` in AssignmentStatement to cancel the bug
 
 traversal fuse {
     // case CProgram {

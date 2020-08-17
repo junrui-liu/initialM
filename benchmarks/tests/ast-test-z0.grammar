@@ -1,4 +1,4 @@
-// testing constant folding only
+// this works with no memory leaks, but takes a little longer time
 
 traversal fuse {
     case CProgram {
@@ -15,9 +15,8 @@ traversal fuse {
         ??;
     }
     case IfStatement {
-        recur condition;
-        iterate then_first_statement { recur then_first_statement; }
-        iterate else_first_statement { recur else_first_statement; }
+        recur then_first_statement;
+        recur else_first_statement;
         ??;
     }
     case NopStatement {
@@ -98,9 +97,8 @@ class AssignmentStatement : Statement {
 }
 class IfStatement : Statement {
     children {
-        condition : Expression;
-        then_first_statement : [Statement];
-        else_first_statement : [Statement];
+        then_first_statement : Statement;
+        else_first_statement : Statement;
     }
     rules {
         self.statement_type := 1;

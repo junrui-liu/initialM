@@ -1,4 +1,5 @@
-// testing the memory allocation
+// this takes up nearly infinite (>64GB) memory very quickly
+// based on z0, but adds back the condition for if statement
 
 traversal fuse {
     case CProgram {
@@ -35,8 +36,8 @@ traversal fuse {
         ??;
     }
     case BinaryExpression {
-        iterate lhs { recur lhs; }
-        iterate rhs { recur rhs; }
+        recur lhs;
+        recur rhs;
         ??;
     }
     case VarRefExpression {
@@ -173,10 +174,28 @@ class BinaryExpression : Expression {
         rhs : Expression;
     }
     rules {
-        self.original_expression_type := 0;
-        self.need_constant_folding := !true;
-        self.final_expression_type := 0;
-        self.final_value := self.value;
+        self.original_expression_type := 1;
+
+        self.need_constant_folding := 
+            if lhs.final_expression_type == 0 && rhs.final_expression_type == 0 then
+                true
+            else
+                !true;
+
+        self.final_expression_type := 
+            if self.need_constant_folding then
+                0
+            else
+                1;
+
+        self.final_value := 
+            if self.need_constant_folding then
+                if self.operator == 0 then
+                    lhs.final_value + rhs.final_value
+                else
+                    lhs.final_value - rhs.final_value
+            else
+                self.value;
     }
 }
 class VarRefExpression : Expression {

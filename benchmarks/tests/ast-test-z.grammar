@@ -1,0 +1,191 @@
+// testing the memory allocation
+
+traversal fuse {
+    case CProgram {
+        iterate first_function { recur first_function; }
+    }
+    case CFunction {
+        iterate first_statement { recur first_statement; }
+        iterate next { recur next; }
+    }
+
+    // assignment series
+    case AssignmentStatement {
+        recur assigned_expr;
+        ??;
+    }
+    case IfStatement {
+        recur condition;
+        recur then_first_statement;
+        recur else_first_statement;
+        ??;
+    }
+    case NopStatement {
+        ??;
+    }
+    case IncrStatement {
+        ??;
+    }
+    case DecrStatement {
+        ??;
+    }
+
+    // expression series
+    case ConstantExpression {
+        ??;
+    }
+    case BinaryExpression {
+        iterate lhs { recur lhs; }
+        iterate rhs { recur rhs; }
+        ??;
+    }
+    case VarRefExpression {
+        ??;
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface Program {
+    
+}
+class CProgram : Program {
+    children {
+        first_function : [Function];
+    }
+    rules {
+    }
+}
+
+// ============================== //
+// ========== Function ========== //
+// ============================== //
+
+interface Function {
+    
+}
+class CFunction : Function {
+    children {
+        next : [Function];
+        first_statement : [Statement];
+    }
+    rules {
+    }
+}
+
+// =============================== //
+// ========== Statement ========== //
+// =============================== //
+
+interface Statement {
+    // 0: ASSIGNMENT, 1: IF, 2: NOP, 3: INCR, 4(others): DECR
+    output statement_type : int;
+
+    // ==== based on different statement_type, the following attributes are enabled accordingly ==== //
+    // 0: ASSIGNMENT, 3: INCR, 4(others): DECR
+    input var_id : int; // expanded LHS id, originally it's a VarRefExpression
+
+}
+class AssignmentStatement : Statement {
+    children {
+        assigned_expr : Expression;
+    }
+    rules {
+        self.statement_type := 0;
+    }
+}
+class IfStatement : Statement {
+    children {
+        condition : Expression;
+        then_first_statement : Statement;
+        else_first_statement : Statement;
+    }
+    rules {
+        self.statement_type := 1;
+    }
+}
+class NopStatement : Statement {
+    children {
+    }
+    rules {
+        self.statement_type := 2;
+    }
+}
+class IncrStatement : Statement {
+    children {
+    }
+    rules {
+        self.statement_type := 3;
+    }
+}
+class DecrStatement : Statement {
+    children {
+    }
+    rules {
+        self.statement_type := 4;
+    }
+}
+
+// ================================ //
+// ========== Expression ========== //
+// ================================ //
+
+interface Expression {
+    // 0: CONSTANT, 1: BINARY, 2(others): VARREF
+    // possible conversions:
+    // - BINARY -> CONSTANT (constant folding)
+    //     - original_expression_type -> final_expression_type
+    //     - value -> final_value
+    output original_expression_type : int;
+    output final_expression_type : int; 
+
+    // ==== based on different expression_type, the following attributes are enabled accordingly ==== //
+    // 0: CONSTANT
+    input value : int;
+    output final_value : int;
+
+    // 1: BINARY
+    // binary also has structural LHS and RHS
+    input operator : int; // 0: add, 1(others): subtract
+
+    // 2: VARREF
+    input var_id : int;
+
+    // method conditions
+    output need_constant_folding : bool;
+}
+class ConstantExpression : Expression {
+    children {
+    }
+    rules {
+        self.original_expression_type := 0;
+        self.need_constant_folding := !true;
+        self.final_expression_type := 0;
+        self.final_value := self.value;
+    }
+}
+class BinaryExpression : Expression {
+    children {
+        // for binary expression, lhs and rhs *must* exist
+        lhs : Expression;
+        rhs : Expression;
+    }
+    rules {
+        self.original_expression_type := 0;
+        self.need_constant_folding := !true;
+        self.final_expression_type := 0;
+        self.final_value := self.value;
+    }
+}
+class VarRefExpression : Expression {
+    children {
+    }
+    rules {
+        self.original_expression_type := 2;
+        self.need_constant_folding := !true;
+        self.final_expression_type := 2;
+        self.final_value := self.value;
+    }
+}

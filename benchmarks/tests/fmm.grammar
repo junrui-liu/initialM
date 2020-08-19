@@ -1,0 +1,39 @@
+traversal fuse {
+    case Vertex {
+        ??;
+        iterate kids {??; recur kids; }
+    }
+
+    case Root {
+        ??;
+        recur base;
+    }
+
+}
+
+interface RootInterface {
+}
+
+interface Element {
+    output potential : int;
+}
+
+class Root : RootInterface {
+    children { 
+        base : Element; 
+    }
+
+    rules {
+        base.potential := 0;
+    }
+}
+
+
+class Vertex : Element {
+    children { 
+        kids : [Element]; 
+    }
+    rules {
+        kids.potential := self.potential + 8;        
+    }
+}

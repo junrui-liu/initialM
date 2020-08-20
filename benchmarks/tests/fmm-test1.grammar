@@ -10,15 +10,14 @@ traversal fuse {
     }
     case CVertex {
         ??;
-        iterate c1 { recur c1; }
-        iterate c2 { recur c2; }
-        iterate c3 { recur c3; }
-        iterate c4 { recur c4; }
+        iterate c1 { ??; recur c1; }
+        iterate c2 { ??; recur c2; }
+        iterate c3 { ??; recur c3; }
+        iterate c4 { ??; recur c4; }
         recur data;
     }
     case CData {
-        ??;
-        iterate next { recur next; }
+        iterate next { ??; recur next; }
     }
 }
 

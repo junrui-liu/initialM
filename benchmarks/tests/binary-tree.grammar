@@ -1,17 +1,19 @@
 // BinaryTree example of Grafter
 // this example only deals with insert and search
-// every insertion is provided as an input to the RootInterface
-// every search result is returned as an output of the RootInterface
+// every insertion is provided as an input to the CRoot
+// every search result is returned as an output of the CRoot
 // (notice) assume every insert query can be fulfilled (the tree is big enough so you can always find a spot)
+// run with:
+// ./run.rkt --root Root fuse benchmarks/tests/binary-tree.grammar
 
 // ideal traversal
 traversal fuse {
-    case RootInterface {
+    case CRoot {
         ??;
         recur root;
         ??;
     }
-    case NodeInterface {
+    case CNode {
         ??;
         iterate l { ??; recur l; }
         iterate r { ??; recur r; }
@@ -31,7 +33,7 @@ interface Root {
     // if the valToSearch is null, return false
     output valFound : bool;
 }
-class RootInterface : Root {
+class CRoot : Root {
     children {
         root : Node;
     }
@@ -87,7 +89,7 @@ interface Node {
     output rFound : bool;
 
 }
-class NodeInterface : Node {
+class CNode : Node {
     children {
         l : [Node];
         r : [Node];

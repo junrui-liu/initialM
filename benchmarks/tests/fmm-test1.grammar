@@ -1,7 +1,7 @@
 // this tests the traversal step 2 and step 3
 // (notice) based on FMM definitions, step 2 does not have any explicit dependencies
 // run with:
-// ./run.rkt --root VirtualRoot fuse benchmarks/tests/fmm.grammar
+// ./run.rkt --root VirtualRoot fuse benchmarks/tests/fmm-test1.grammar
 
 traversal fuse {
     case CVirtualRoot {

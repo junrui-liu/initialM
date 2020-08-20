@@ -1,13 +1,15 @@
 // second attempt to solve the oopsla example
-// 
+// run with:
+// ./run.rkt --root Root fuse benchmarks/tests/oopsla-example.grammar
+
 // desired solution:
 // 
-// case RootInterface
+// case CRoot
 // recur root;
 // eval root.x; 
 // eval root.y;
 //
-// case NodeInterface
+// case CNode
 // iterate l { recur l; }
 // iterate r { recur r; }
 // eval self.constantXX;
@@ -16,13 +18,12 @@
 // iterate l { eval l.x; eval l.y; }
 // iterate r { eval r.x; eval r.y; }
 
-// ideal traversal
 traversal fuse {
-    case RootInterface {
+    case CRoot {
         recur root;
         ??;
     }
-    case NodeInterface {
+    case CNode {
         iterate l { recur l; }
         iterate r { recur r; }
         ??;
@@ -35,7 +36,7 @@ traversal fuse {
 
 interface Root {
 }
-class RootInterface : Root {
+class CRoot : Root {
     children {
         root : Node;
     }
@@ -67,7 +68,7 @@ interface Node {
     output y : int;
 
 }
-class NodeInterface : Node {
+class CNode : Node {
     children {
         l : [Node];
         r : [Node];

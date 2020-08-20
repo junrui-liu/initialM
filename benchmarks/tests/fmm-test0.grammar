@@ -1,7 +1,5 @@
-// this tests the traversal step 2 and step 3
+// this tests the traversal step 2
 // (notice) based on FMM definitions, step 2 does not have any explicit dependencies
-// run with:
-// ./run.rkt --root VirtualRoot fuse benchmarks/tests/fmm.grammar
 
 traversal fuse {
     case CVirtualRoot {
@@ -30,8 +28,6 @@ class CVirtualRoot : VirtualRoot {
         root : Vertex; 
     }
     rules {
-        // parentPotential base case is initialized to 0
-        root.parentPotential := 0;
     }
 }
 
@@ -41,7 +37,7 @@ interface Vertex {
     input box.endX : int;
     input box.endY : int;
 
-    output parentPotential : int;
+    output potential : int;
     output interactionList : VertexList;
 
     output x1 : int;
@@ -54,28 +50,18 @@ class CVertex : Vertex {
         c2 : [Vertex];
         c3 : [Vertex];
         c4 : [Vertex];
-        // (notice) first data represents this vertex
-        // the "next" of data represents a head of a list of points if the current vertex is leaf
         data : Data;
     }
     rules {
         self.x1 := ( self.box.startX + self.box.endX ) / 2;
         self.y1 := ( self.box.startY + self.box.endY ) / 2;
 
-        data.potential := 
+        self.potential := 
             0 + getPotential(
                 self.x1, self.y1,
                 data.mass,
                 self.interactionList
             );
-
-        data.finalPotential := data.potential + self.parentPotential;
-        data.basePotential := data.finalPotential;
-
-        c1.parentPotential := data.finalPotential;
-        c2.parentPotential := data.finalPotential;
-        c3.parentPotential := data.finalPotential;
-        c4.parentPotential := data.finalPotential;
 
         // (notice) depend on self **inputs** (not outputs), no need to provide arguments
         // (notice) according to FMM, interaction list will not include children (does not overlap with children list)
@@ -85,22 +71,15 @@ class CVertex : Vertex {
 
 interface Data {
     input mass : int;
+    input potential : int;
     input coordX : int;
     input coordY : int;
-
-    output potential : int;
-    output finalPotential : int;
-    output basePotential : int;
 }
 class CData : Data {
     children {
-        // only leaf vertex has non-empty next list
         next : [Data];
     }
     rules {
-        // potential base case is 0, see main.cpp:698
-        next.potential := 0;
-        next.basePotential := self.basePotential;
-        next.finalPotential := next.potential + self.basePotential;
+
     }
 }

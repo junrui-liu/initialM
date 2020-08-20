@@ -1,63 +1,6 @@
-// testing constant folding only
-// == desired schedule == //
-// traversal fuse {
-//   case CProgram {
-//     iterate[left] first_function {
-//       recur first_function;
-//     }
-//   }
-//   case CFunction {
-//     iterate[left] first_statement {
-//       recur first_statement;
-//     }
-//     iterate[left] next {
-//       recur next;
-//     }
-//   }
-//   case AssignmentStatement {
-//     recur assigned_expr;
-//     eval self.statement_type;
-//   }
-//   case IfStatement {
-//     recur condition;
-//     iterate[left] then_first_statement {
-//       recur then_first_statement;
-//     }
-//     iterate[left] else_first_statement {
-//       recur else_first_statement;
-//     }
-//     eval self.statement_type;
-//   }
-//   case NopStatement {
-//     eval self.statement_type;
-//   }
-//   case IncrStatement {
-//     eval self.statement_type;
-//   }
-//   case DecrStatement {
-//     eval self.statement_type;
-//   }
-//   case ConstantExpression {
-//     eval self.need_constant_folding;
-//     eval self.final_value;
-//     eval self.original_expression_type;
-//     eval self.final_expression_type;
-//   }
-//   case BinaryExpression {
-//     recur lhs;
-//     recur rhs;
-//     eval self.original_expression_type;
-//     eval self.need_constant_folding;
-//     eval self.final_value;
-//     eval self.final_expression_type;
-//   }
-//   case VarRefExpression {
-//     eval self.original_expression_type;
-//     eval self.final_expression_type;
-//     eval self.final_value;
-//     eval self.need_constant_folding;
-//   }
-// }
+// testing the following
+// - constant folding: only applies on expression level
+// - constant propagation: assignment generates rules, but apply on expressions; rules are not shared between functions
 
 traversal fuse {
     case CProgram {
@@ -131,6 +74,7 @@ class CFunction : Function {
         first_statement : [Statement];
     }
     rules {
+        first_statement.original_constant_propagation_info := empty_constant_propagation_info();
     }
 }
 
@@ -146,6 +90,9 @@ interface Statement {
     // 0: ASSIGNMENT, 3: INCR, 4(others): DECR
     input var_id : int; // expanded LHS id, originally it's a VarRefExpression
 
+    // constant propagation exclusive
+    output original_constant_propagation_info : int;
+    output final_constant_propagation_info : int;
 }
 class AssignmentStatement : Statement {
     children {
@@ -153,6 +100,13 @@ class AssignmentStatement : Statement {
     }
     rules {
         self.statement_type := 0;
+        self.final_constant_propagation_info := 
+            if assigned_expr.final_expression_type == 0 then
+                add_constant_propagation_info( self.original_constant_propagation_info, assigned_expr.final_value, self.var_id )
+            else
+                self.original_constant_propagation_info;
+
+        assigned_expr.constant_propagation_info := self.final_constant_propagation_info;
     }
 }
 class IfStatement : Statement {
@@ -163,6 +117,10 @@ class IfStatement : Statement {
     }
     rules {
         self.statement_type := 1;
+        self.final_constant_propagation_info := self.original_constant_propagation_info;
+        condition.constant_propagation_info := self.final_constant_propagation_info;
+        then_first_statement.original_constant_propagation_info := self.final_constant_propagation_info;
+        else_first_statement.original_constant_propagation_info := self.final_constant_propagation_info;
     }
 }
 class NopStatement : Statement {
@@ -170,6 +128,7 @@ class NopStatement : Statement {
     }
     rules {
         self.statement_type := 2;
+        self.final_constant_propagation_info := self.original_constant_propagation_info;
     }
 }
 class IncrStatement : Statement {
@@ -177,6 +136,7 @@ class IncrStatement : Statement {
     }
     rules {
         self.statement_type := 3;
+        self.final_constant_propagation_info := self.original_constant_propagation_info;
     }
 }
 class DecrStatement : Statement {
@@ -184,6 +144,7 @@ class DecrStatement : Statement {
     }
     rules {
         self.statement_type := 4;
+        self.final_constant_propagation_info := self.original_constant_propagation_info;
     }
 }
 
@@ -195,6 +156,9 @@ interface Expression {
     // 0: CONSTANT, 1: BINARY, 2(others): VARREF
     // possible conversions:
     // - BINARY -> CONSTANT (constant folding)
+    //     - original_expression_type -> final_expression_type
+    //     - value -> final_value
+    // - VARREF -> CONSTANT (constant propagation)
     //     - original_expression_type -> final_expression_type
     //     - value -> final_value
     output original_expression_type : int;
@@ -212,8 +176,12 @@ interface Expression {
     // 2: VARREF
     input var_id : int;
 
-    // method conditions
+    // constant folding exclusive
     output need_constant_folding : bool;
+
+    // constant propagation exclusive
+    output need_constant_propagation : int;
+    output constant_propagation_info : int;
 }
 class ConstantExpression : Expression {
     children {
@@ -221,6 +189,7 @@ class ConstantExpression : Expression {
     rules {
         self.original_expression_type := 0;
         self.need_constant_folding := !true;
+        self.need_constant_propagation := !true;
         self.final_expression_type := 0;
         self.final_value := self.value;
     }
@@ -239,6 +208,10 @@ class BinaryExpression : Expression {
                 true
             else
                 !true;
+
+        self.need_constant_propagation := !true;
+        lhs.constant_propagation_info := self.constant_propagation_info;
+        rhs.constant_propagation_info := self.constant_propagation_info;
 
         self.final_expression_type := 
             if self.need_constant_folding then
@@ -262,7 +235,23 @@ class VarRefExpression : Expression {
     rules {
         self.original_expression_type := 2;
         self.need_constant_folding := !true;
-        self.final_expression_type := 2;
-        self.final_value := self.value;
+
+        self.need_constant_propagation :=
+            if has_id(self.constant_propagation_info,self.var_id) then
+                true
+            else
+                !true;
+
+        self.final_expression_type := 
+            if self.need_constant_propagation then
+                0
+            else
+                2;
+
+        self.final_value := 
+            if self.need_constant_propagation then
+                get_value_by_id(self.constant_propagation_info,self.var_id)
+            else
+                self.value;
     }
 }

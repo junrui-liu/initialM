@@ -231,7 +231,9 @@
           [(ag:child/seq name interface)
            (let ([subtrees (generate interface)])
              (list (cons name
-                         (append (map tree-copy subtrees) subtrees))))])))
+                         (append (list) subtrees))))])))
+    ;;; (pretty-display children)
+    ;;; (assert #f)
     (map (curry tree class null) (apply cartesian-product children)))
 
   (append-map construct (ag:interface-classes (ag:grammar-ref/interface G root))))

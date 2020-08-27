@@ -29,7 +29,8 @@ class __tree_structure__ ValueNode: public Node {
 		int v, x, y;
 		__tree_child__ Node * Left, * Right;
 		__tree_traversal__ void f1() {
-			bool is_leaf = (Left -> Type == NULL_NODE) && (Right -> Type == NULL_NODE);
+			bool is_leaf;
+			is_leaf = (Left -> Type == NULL_NODE) && (Right -> Type == NULL_NODE);
 			Left -> f1();
 			Right -> f1();
 			if (is_leaf) {
@@ -40,7 +41,8 @@ class __tree_structure__ ValueNode: public Node {
 			return;
 		}
 		__tree_traversal__ void f2() {
-			bool not_is_leaf = (Left -> Type == VAL_NODE) || (Right -> Type == VAL_NODE);
+			bool not_is_leaf;
+			not_is_leaf = (Left -> Type == VAL_NODE) || (Right -> Type == VAL_NODE);
 			if (not_is_leaf) {
 				x = v;
 				static_cast < ValueNode * > (Left) -> x = x + 2;
@@ -93,3 +95,4 @@ int main() {
 	Root -> f1();
 	Root -> f2();
 }
+

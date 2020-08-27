@@ -29,7 +29,8 @@ class __tree_structure__ ValueNode: public Node {
 		int v, x, y;
 		__tree_child__ Node * Left, * Right;
 		__tree_traversal__ void f1() {
-			bool is_leaf = (Left -> Type == NULL_NODE) && (Right -> Type == NULL_NODE);
+			bool is_leaf;
+			is_leaf = (Left -> Type == NULL_NODE) && (Right -> Type == NULL_NODE);
 			Left -> f1();
 			Right -> f1();
 			if (is_leaf) {
@@ -42,8 +43,9 @@ class __tree_structure__ ValueNode: public Node {
 		__tree_traversal__ void f2() {
 			// left part
 			if (Left -> Type == VAL_NODE) {
-				ValueNode * LL = static_cast < ValueNode * > (Left);
-				bool left_is_leaf = (LL -> Left -> Type == NULL_NODE) && (LL -> Right -> Type == NULL_NODE);
+				ValueNode *const LL = static_cast < ValueNode * > (Left);
+				bool left_is_leaf;
+				left_is_leaf = (LL -> Left -> Type == NULL_NODE) && (LL -> Right -> Type == NULL_NODE);
 				if (left_is_leaf) {
 					LL -> x = v + 2;
 				} else {
@@ -55,10 +57,11 @@ class __tree_structure__ ValueNode: public Node {
 
 			// right part
 			if (Right -> Type == VAL_NODE) {
-				ValueNode * RR = static_cast < ValueNode * > (Right);
-				bool right_is_leaf = (RR -> Left -> Type == NULL_NODE) && (RR -> Right -> Type == NULL_NODE);
+				ValueNode *const RR = static_cast < ValueNode * > (Right);
+				bool right_is_leaf;
+				right_is_leaf = (RR -> Left -> Type == NULL_NODE) && (RR -> Right -> Type == NULL_NODE);
 				if (right_is_leaf) {
-					RR -> x = -9999;
+					RR -> x = 9999;
 				} else {
 					RR -> x = RR -> v;
 				}
@@ -112,3 +115,4 @@ int main() {
 	Root -> f1();
 	Root -> f2();
 }
+

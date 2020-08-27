@@ -15,12 +15,14 @@ public:
   __tree_traversal__ virtual void f1() {}
   __tree_traversal__ virtual void f2() {}
   virtual void __virtualStub0(unsigned int truncate_flags);
+  virtual void __virtualStub1(unsigned int truncate_flags);
 };
 
 class __tree_structure__ NullNode : public Node {
   __tree_traversal__ void f1() { return; }
   __tree_traversal__ void f2() { return; }
   void __virtualStub0(unsigned int truncate_flags) override;
+  void __virtualStub1(unsigned int truncate_flags) override;
 };
 
 class __tree_structure__ ValueNode : public Node {
@@ -28,7 +30,8 @@ public:
   int v, x, y;
   __tree_child__ Node *Left, *Right;
   __tree_traversal__ void f1() {
-    bool is_leaf = (Left->Type == NULL_NODE) && (Right->Type == NULL_NODE);
+    bool is_leaf;
+    is_leaf = (Left->Type == NULL_NODE) && (Right->Type == NULL_NODE);
     Left->f1();
     Right->f1();
     if (is_leaf) {
@@ -40,7 +43,8 @@ public:
     return;
   }
   __tree_traversal__ void f2() {
-    bool not_is_leaf = (Left->Type == VAL_NODE) || (Right->Type == VAL_NODE);
+    bool not_is_leaf;
+    not_is_leaf = (Left->Type == VAL_NODE) || (Right->Type == VAL_NODE);
     if (not_is_leaf) {
       x = v;
       static_cast<ValueNode *>(Left)->x = x + 2;
@@ -50,6 +54,7 @@ public:
     Right->f2();
   }
   void __virtualStub0(unsigned int truncate_flags) override;
+  void __virtualStub1(unsigned int truncate_flags) override;
 };
 
 Node *createTree() {
@@ -104,12 +109,42 @@ void _fuse__F5F6(ValueNode *_r, unsigned int truncate_flags) {
         (_r_f0->Left->Type == NULL_NODE) && (_r_f0->Right->Type == NULL_NODE);
   }
 _label_B1F0_Exit:
+  if ((truncate_flags & 0b1)) /*call*/ {
+    _r_f0->Left->f1();
+  }
+  if ((truncate_flags & 0b11)) /*call*/ {
+    unsigned int AdjustedTruncateFlags = 0;
+    AdjustedTruncateFlags <<= 1;
+    AdjustedTruncateFlags |= (0b01 & (truncate_flags >> 1));
+    AdjustedTruncateFlags <<= 1;
+    AdjustedTruncateFlags |= (0b01 & (truncate_flags >> 0));
+    _r_f0->Right->__virtualStub0(AdjustedTruncateFlags);
+  }
+  if (truncate_flags & 0b1) {
+    if (_f0_is_leaf) {
+      _r_f0->v = 1;
+    } else {
+      _r_f0->v = static_cast<class ValueNode *>(_r_f0->Left)->v +
+                 static_cast<class ValueNode *>(_r_f0->Right)->v;
+    }
+    truncate_flags &= 0b11111111110;
+    goto _label_B3F0_Exit;
+  }
+_label_B3F0_Exit:
   _Bool _f1_not_is_leaf;
   if (truncate_flags & 0b10) {
+    _r_f1->y = _r_f1->v * 2;
     _f1_not_is_leaf =
         (_r_f1->Left->Type == VAL_NODE) || (_r_f1->Right->Type == VAL_NODE);
+    if (_f1_not_is_leaf) {
+      _r_f1->x = _r_f1->v;
+      static_cast<class ValueNode *>(_r_f1->Left)->x = _r_f1->x + 2;
+    }
   }
-_label_B1F1_Exit:
+_label_B3F1_Exit:
+  if ((truncate_flags & 0b10)) /*call*/ {
+    _r_f1->Left->f2();
+  }
   return;
 };
 void _fuse__F1F2(Node *_r, unsigned int truncate_flags) {
@@ -149,6 +184,15 @@ void NullNode::__virtualStub0(unsigned int truncate_flags) {
 void ValueNode::__virtualStub0(unsigned int truncate_flags) {
   _fuse__F5F6(this, truncate_flags);
 }
+void Node::__virtualStub1(unsigned int truncate_flags) {
+  _fuse__F1F2(this, truncate_flags);
+}
+void NullNode::__virtualStub1(unsigned int truncate_flags) {
+  _fuse__F3F4(this, truncate_flags);
+}
+void ValueNode::__virtualStub1(unsigned int truncate_flags) {
+  _fuse__F5F6(this, truncate_flags);
+}
 int main() {
   Node *Root = createTree();
   // here starts the part that requires fusion
@@ -156,5 +200,5 @@ int main() {
   // Root -> f2();
 
   // added by fuse transformer
-  Root->__virtualStub0(0b11);
+  Root->__virtualStub1(0b11);
 }

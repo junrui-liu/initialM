@@ -1,0 +1,46 @@
+--> what main.cpp (fused) is actually doing:
+initial call: fused(root, true, true)
+
+fused(n, do1, do2)
+	if (n=null) return
+	if (do1)
+		f1(n.l)
+	if (do1 && do2)
+		fused(n.r, do1, do2)
+	if (do1)
+		if (n.isLeaf)
+			n.v = 1
+		else
+			n.v = n.l.v + n.r.v
+	if (do2)
+		if (!n.isLeaf)
+			n.x = n.v
+			n.l.x = n.x + 2;
+		n.y = n.v * 2
+	if (do2)
+		f2(n.l)
+
+
+--> what main_ag.cpp (fused) is actually doing:
+initial call: fused(root, true, true)
+
+fused(n, do1, do2)
+	if (n=null) return
+	fused(n.l, do1, do2)
+	fused(n.r, do1, do2)
+	if (do1)
+		if (n.isLeaf)
+			n.v = 1
+		else
+			n.v = n.l.v + n.r.v
+	if (do2)
+		if (n.r.isLeaf)
+			n.r.x = null
+		else
+			n.r.x = n.r.v
+		if (n.l.isLeaf)
+			n.l.x = n.v + 2
+		else
+			n.l.x = n.l.v
+		n.l.y = n.l.v * 2
+

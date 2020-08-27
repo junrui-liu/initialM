@@ -40,12 +40,31 @@ class __tree_structure__ ValueNode: public Node {
 			return;
 		}
 		__tree_traversal__ void f2() {
-			bool not_is_leaf = (Left -> Type == VAL_NODE) || (Right -> Type == VAL_NODE);
-			if (not_is_leaf) {
-				x = v;
-				static_cast < ValueNode * > (Left) -> x = x + 2;
+			// left part
+			if (Left -> Type == VAL_NODE) {
+				ValueNode * LL = static_cast < ValueNode * > (Left);
+				bool left_is_leaf = (LL -> Left -> Type == NULL_NODE) && (LL -> Right -> Type == NULL_NODE);
+				if (left_is_leaf) {
+					LL -> x = v + 2;
+				} else {
+					LL -> x = LL -> v;
+				}
+				LL -> y = LL -> v * 2;
 			}
-			y = v * 2;
+			
+
+			// right part
+			if (Right -> Type == VAL_NODE) {
+				ValueNode * RR = static_cast < ValueNode * > (Right);
+				bool right_is_leaf = (RR -> Left -> Type == NULL_NODE) && (RR -> Right -> Type == NULL_NODE);
+				if (right_is_leaf) {
+					RR -> x = -9999;
+				} else {
+					RR -> x = RR -> v;
+				}
+				RR -> y = RR -> v * 2;
+			}
+			
 			Left -> f2();
 			Right -> f2();
 		}

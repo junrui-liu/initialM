@@ -4,8 +4,8 @@
 // uncomment `next : [Statement];` in AssignmentStatement to cancel the bug
 
 traversal fuse {
-    // case CProgram {
-    // }
+    case CProgram {
+    }
     case CFunction {
     }
 
@@ -28,16 +28,16 @@ traversal fuse {
 // ========== Program ========== //
 // ============================= //
 
-// interface Program {
+interface Program {
     
-// }
-// class CProgram : Program {
-//     children {
-//         first_function : [Function];
-//     }
-//     rules {
-//     }
-// }
+}
+class CProgram : Program {
+    children {
+        first_function : [Function];
+    }
+    rules {
+    }
+}
 
 // ============================== //
 // ========== Function ========== //

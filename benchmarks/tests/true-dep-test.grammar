@@ -34,9 +34,9 @@ class CVirtualRoot : VirtualRoot {
 
 interface Node {
     // is_leaf property related
-    output id : bool;
-    output has_kids : bool;
-    output is_leaf : bool;
+    // output id : bool;
+    // output has_kids : bool;
+    // output is_leaf : bool;
 
     input width : int;
     input ratio : int; // percentage [0,1]
@@ -49,9 +49,9 @@ class CNode : Node {
     }
     rules {
         // is_leaf property computation
-        self.id := true;
-        self.is_leaf := self.has_kids;
-        self.has_kids := [0]{ kids.id : !true };
+        // self.id := true;
+        // self.is_leaf := self.has_kids;
+        // self.has_kids := [0]{ kids.id : !true };
 
         self.final0_width := foldl default() .. max( @{self.final0_width}, kids.width );
         kids.final1_width := compute( self.final1_width, kids.ratio );

@@ -1,0 +1,82 @@
+// 
+// run with: ./run.rkt --root VirtualRoot fuse benchmarks/tests/true-dep-test.grammar
+//
+// still working...
+
+traversal fuse {
+    case CVirtualRoot {
+        ??;
+        recur root;
+        ??;
+    }
+    case CNode {
+        ??;
+        iterate kids { ??; recur kids; ??; }
+        ??;
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface VirtualRoot {
+    
+}
+class CVirtualRoot : VirtualRoot {
+    children {
+        root : Node;
+    }
+    rules {
+        root.final1_width := root.final0_width;
+    }
+}
+
+interface Node {
+    // is_leaf property related
+    output id : bool;
+    output has_kids : bool;
+    output is_leaf : bool;
+
+    input width : int;
+    input ratio : int; // percentage [0,1]
+    output final0_width : int;
+    output final1_width : int;
+}
+class CNode : Node {
+    children {
+        kids : [Node]; // 0 or 1
+    }
+    rules {
+        // is_leaf property computation
+        self.id := true;
+        self.is_leaf := self.has_kids;
+        self.has_kids := [0]{ kids.id : !true };
+
+        // self.final0_width := foldl default() .. max( @{self.final0_width}, kids.width );
+        // kids.final1_width := compute( self.final1_width, kids.ratio );
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

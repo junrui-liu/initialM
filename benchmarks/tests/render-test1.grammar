@@ -1,0 +1,219 @@
+// this deals with ResolveFlexWidths (post-order)
+// run with: ./run.rkt --root Document fuse benchmarks/tests/render-test1.grammar
+
+traversal fuse {
+    case CDocument {
+        iterate first_page { ??; recur first_page; }
+    }
+    case CPage {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; }
+        iterate next { ??; recur next; }
+        ??;
+    }
+    case CHorizontalContainer {
+        ??;
+        iterate first_element { ??; recur first_element; }
+        iterate next { ??; recur next; }
+        ??;
+    }
+    case CNormalElement {
+        ??;
+        iterate next { ??; recur next; }
+        ??;
+    }
+    case CVerticalContainer {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; }
+        iterate next { ??; recur next; }
+        ??;
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface Document {
+    
+}
+class CDocument : Document {
+    children {
+        first_page : [Page]; // 0 or 1
+    }
+    rules {
+        first_page.exist := true;
+    }
+}
+
+interface Page {
+    // structure info (inferred)
+    output is_last : bool;
+    output exist : bool;
+
+    // normal shared data
+    // input pos_x : int;
+    // input pos_y : int;
+    // input height : int;
+    input width : int;
+    // input rel_width : int;
+    input w_mode : int; // 0: ABS, 1: REL, 2: FLEX, others: ?
+    // input font_style : info;
+    // input background_color : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+}
+class CPage : Page {
+    children {
+        first_horiz : [HorizontalContainer]; // 0 or 1
+        next : [Page]; // 0 or 1
+    }
+    rules {
+        next.exist := true;
+        self.is_last := ![0]{ next.exist : !true };
+        first_horiz.exist := true;
+
+        self.final0_width :=
+            if self.w_mode == 2 then
+                // first_horiz.max_width
+                // we assume the default value is 0
+                [0]{ first_horiz.max_width : 0 }
+            else
+                self.width;
+    }
+}
+
+interface HorizontalContainer {
+    // structure info (inferred)
+    output is_last : bool;
+    output exist : bool;
+
+    // normal shared data
+    // input pos_x : int;
+    // input pos_y : int;
+    // input height : int;
+    input width : int;
+    // input rel_width : int;
+    input w_mode : int; // 0: ABS, 1: REL, 2: FLEX, others: ?
+    // input font_style : info;
+    // input background_color : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+
+    // main attributes
+    output max_width : int;
+    // output aggregated_height : int;
+}
+class CHorizontalContainer : HorizontalContainer {
+    children {
+        first_element : [Element]; // 0 or 1
+        next : [HorizontalContainer]; // 0 or 1
+    }
+    rules {
+        next.exist := true;
+        self.is_last := ![0]{ next.exist : !true };
+        first_element.exist := true;
+
+        self.final0_width :=
+            if self.w_mode == 2 then
+                [0]{ first_element.accumulated_width : 0 }
+            else
+                self.width;
+        self.max_width := 
+            if self.is_last then
+                self.final0_width
+            else
+                if self.final0_width > [0]{ next.max_width : 0 } then
+                    self.final0_width
+                else
+                    [0]{ next.max_width : 0 };
+    }
+}
+
+interface Element {
+    // structure info (inferred)
+    output is_last : bool;
+    output exist : bool;
+
+    // normal shared data
+    // input pos_x : int;
+    // input pos_y : int;
+    // input height : int;
+    input width : int;
+    // input rel_width : int;
+    input w_mode : int; // 0: ABS, 1: REL, 2: FLEX, others: ?
+    // input font_style : info;
+    // input background_color : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+
+    // 0: TextBox, 1: List, 2: Image, 3: VerticalContainer
+    // input element_type : int;
+
+    // main attributes
+    output accumulated_width : int;
+    // output max_height : int;
+}
+class CNormalElement : Element {
+    children {
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        next.exist := true;
+        self.is_last := ![0]{ next.exist : !true };
+
+        self.final0_width := self.width; // don't care
+        self.accumulated_width :=
+            if self.is_last then
+                self.final0_width
+            else
+                self.final0_width + [0]{ next.accumulated_width : 0 };
+
+    }
+}
+class CVerticalContainer : Element {
+    children {
+        first_horiz : [HorizontalContainer]; // exclusive for CVerticalContainer
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        next.exist := true;
+        self.is_last := ![0]{ next.exist : !true };
+        first_horiz.exist := true;
+
+        self.final0_width := 
+            if self.w_mode == 2 then
+                [0]{ first_horiz.max_width : 0 }
+            else
+                self.width;
+        self.accumulated_width :=
+            if self.is_last then
+                self.final0_width
+            else
+                self.final0_width + [0]{ next.accumulated_width : 0 };
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -53,8 +53,8 @@ class CNode : Node {
         self.is_leaf := self.has_kids;
         self.has_kids := [0]{ kids.id : !true };
 
-        // self.final0_width := foldl default() .. max( @{self.final0_width}, kids.width );
-        // kids.final1_width := compute( self.final1_width, kids.ratio );
+        self.final0_width := foldl default() .. max( @{self.final0_width}, kids.width );
+        kids.final1_width := compute( self.final1_width, kids.ratio );
     }
 }
 

@@ -1,0 +1,146 @@
+// 
+// run with: ./run.rkt --root VirtualRoot fuse benchmarks/tests/hv-box-test-2.grammar
+//
+// this works but takes quite long (>10m): SAT
+// traversal fuse {
+//   case VRBox {
+//     eval root.y;
+//     eval root.x;
+//     recur root;
+//   }
+//   case HBox {
+//     eval l.y;
+//     eval l.x;
+//     recur l;
+//     eval r.y;
+//     eval r.x;
+//     recur r;
+//     eval self.h;
+//     eval self.w;
+//   }
+//   case VBox {
+//     eval b.y;
+//     eval b.x;
+//     recur b;
+//     eval t.y;
+//     eval t.x;
+//     recur t;
+//     eval self.h;
+//     eval self.w;
+//   }
+//   case Leaf {
+//     eval self.h;
+//     eval self.w;
+//   }
+// }
+//
+// (important) but if you change the root rules to depend on children, you get UNSAT
+
+traversal fuse {
+    case VRBox {
+        ??;
+        recur root;
+    }
+    case HBox {
+        ??;
+        recur l; // (important) l should recur before r
+        ??;
+        recur r;
+        ??;
+    }
+    case VBox {
+        ??;
+        recur b; // (important) b should recur before t
+        ??;
+        recur t;
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
+}
+
+interface VirtualRoot {
+
+}
+class VRBox : VirtualRoot {
+    children {
+        root : HVBox;
+    }
+    rules {
+        // root.x := default();
+        // root.y := default();
+        root.x := root.w; // use this you will get UNSAT
+        root.y := root.h; // use this you will get UNSAT
+    }
+}
+
+interface HVBox {
+    output w : int;
+    output h : int;
+    output x : int;
+    output y : int;
+    input w0 : int; // for Leaf
+    input h0 : int; // for Leaf
+}
+class HBox : HVBox {
+    children {
+        l : HVBox;
+        r : HVBox;
+    }
+    rules {
+        l.x := self.x;
+        r.x := self.x + l.w; // key
+
+        l.y := self.y;
+        r.y := self.y;
+
+        self.w := l.w + r.w;
+        self.h := max( l.h, r.h );
+    }
+}
+class VBox : HVBox {
+    children {
+        t : HVBox;
+        b : HVBox;
+    }
+    rules {
+        t.x := self.x;
+        b.x := self.x;
+
+        t.y := self.y + b.h; // key
+        b.y := self.y;
+
+        self.w := max( t.w, b.w );
+        self.h := t.h + b.h;
+    }
+}
+class Leaf : HVBox {
+    children {
+
+    }
+    rules {
+        self.w := self.w0;
+        self.h := self.h0;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

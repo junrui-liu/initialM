@@ -31,7 +31,7 @@ class CVirtualRoot : VirtualRoot {
         root : Node;
     }
     rules {
-        root.final0_args := 0;
+        root.final0_args := 1; // n->addConst(1)
     }
 }
 

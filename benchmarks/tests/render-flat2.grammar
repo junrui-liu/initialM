@@ -1,0 +1,195 @@
+// this deals with ResolveFlexWidths (post-order)
+// this also deals with ResolveRelativeWidth (pre-order)
+// run with: ./run.rkt --root Document fuse benchmarks/tests/render-flat2.grammar
+// 
+//
+// hints:
+// 1. foldl expression should be placed into iterate { ??; }
+
+traversal fuse {
+    case CDocument {
+        iterate page_list { recur page_list; }
+    }
+    case CPage {
+        iterate flex_horiz_list { recur flex_horiz_list; ??; }
+        ??;
+        iterate rel_horiz_list { recur rel_horiz_list; }
+    }
+    case CFlexHorizontalContainer {
+        // iterate flex_element_list { recur flex_element_list; ??; }
+        ??;
+        // iterate rel_element_list { ??; recur rel_element_list; }
+    }
+    case CRelHorizontalContainer {
+        // iterate flex_element_list { recur flex_element_list; ??; }
+        ??;
+        // iterate rel_element_list { ??; recur rel_element_list; }
+    }
+    // case CNormalElement {
+    //     ??;
+    // }
+    // case CFlexVerticalContainer {
+    //     iterate flex_horiz_list { recur flex_horiz_list; ??; }
+    //     ??;
+    //     iterate rel_horiz_list { ??; recur rel_horiz_list; }
+    // }
+    // case CRelVerticalContainer {
+    //     iterate flex_horiz_list { recur flex_horiz_list; ??; }
+    //     ??;
+    //     iterate rel_horiz_list { ??; recur rel_horiz_list; }
+    // }
+}
+
+// ============================== //
+// ========== Document ========== //
+// ============================== //
+
+interface Document {
+    
+}
+class CDocument : Document {
+    children {
+        page_list : [Page];
+    }
+    rules {
+    }
+}
+
+interface Page {
+    // normal shared data
+    input width : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+    output flex_children_max_width : int; // // after ResolveFlexWidths
+}
+class CPage : Page {
+    children {
+        flex_horiz_list : [FlexHorizontalContainer]; // 0 or 1
+        rel_horiz_list : [RelHorizontalContainer]; // 0 or 1
+    }
+    rules {
+        // ==== ResolveFlexWidths ==== //
+        self.flex_children_max_width := foldl default() .. max( @{self.flex_children_max_width}, flex_horiz_list.final0_width );
+        // self.flex_children_max_width := default();
+        self.final0_width := max( self.flex_children_max_width, self.width );
+
+        // ==== ResolveRelativeWidth ==== //
+        // rel_horiz_list.final0_width := self.final0_width * rel_horiz_list.rel_width;
+        // rel_horiz_list.final0_width := default();
+    }
+}
+
+interface FlexHorizontalContainer {
+    // normal shared data
+    input width : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+    output flex_children_accu_width : int;
+}
+class CFlexHorizontalContainer : FlexHorizontalContainer {
+    children {
+        // rel_element_list : [RelElement]; // 0 or 1
+        // flex_element_list : [FlexElement]; // 0 or 1
+    }
+    rules {
+        // ==== ResolveFlexWidths ==== //
+        // self.flex_children_accu_width := foldl default() .. @{self.flex_children_accu_width} + flex_element_list.final0_width;
+        // self.final0_width := max( self.flex_children_accu_width, self.width );
+        self.flex_children_accu_width := default();
+        self.final0_width := default();
+
+        // ==== ResolveRelativeWidth ==== //
+        // rel_element_list.final0_width := self.final0_width * rel_element_list.rel_width;
+    }
+}
+
+interface RelHorizontalContainer {
+    // normal shared data
+    input width : int;
+    input rel_width : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+}
+class CRelHorizontalContainer : RelHorizontalContainer {
+    children {
+        // rel_element_list : [RelElement]; // 0 or 1
+        // flex_element_list : [FlexElement]; // 0 or 1
+    }
+    rules {
+        // ==== ResolveRelativeWidth ==== //
+        // rel_element_list.final0_width := self.final0_width * rel_element_list.rel_width;
+        self.final0_width := default();
+    }
+}
+
+// interface FlexElement {
+//     // normal shared data
+//     input width : int;
+
+//     output final0_width : int; // after ResolveFlexWidths
+//     output flex_children_max_width : int; // only for VerticalContainer
+// }
+// class CNormalElement : FlexElement {
+//     children {
+//     }
+//     rules {
+//         // ==== ResolveFlexWidths ==== //
+//         self.final0_width := self.width;
+//         self.flex_children_max_width := self.final0_width;
+//     }
+// }
+// class CFlexVerticalContainer : FlexElement {
+//     children {
+//         rel_horiz_list : [RelHorizontalContainer]; // 0 or 1
+//         flex_horiz_list : [FlexHorizontalContainer]; // 0 or 1
+//     }
+//     rules {
+//         // ==== ResolveFlexWidths ==== //
+//         self.flex_children_max_width := foldl default() .. max( @{self.flex_children_max_width}, flex_horiz_list.final0_width );
+//         self.final0_width := max( self.flex_children_max_width, self.width );
+
+//         // ==== ResolveRelativeWidth ==== //
+//         rel_horiz_list.final0_width := self.final0_width * rel_horiz_list.rel_width;
+//     }
+// }
+
+// interface RelElement {
+//     // normal shared data
+//     input width : int;
+//     input rel_width : int;
+
+//     output final0_width : int; // after ResolveFlexWidths
+// }
+// class CRelVerticalContainer : RelElement {
+//     children {
+//         rel_horiz_list : [RelHorizontalContainer]; // exclusive for CVerticalContainer
+//         flex_horiz_list : [FlexHorizontalContainer]; // exclusive for CVerticalContainer
+//     }
+//     rules {
+//         // ==== ResolveRelativeWidth ==== //
+//         rel_horiz_list.final0_width := self.final0_width * rel_horiz_list.rel_width;
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

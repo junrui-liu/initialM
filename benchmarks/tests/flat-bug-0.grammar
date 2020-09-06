@@ -1,0 +1,106 @@
+// this deals with ResolveFlexWidths (post-order)
+// this also deals with ResolveRelativeWidth (pre-order)
+// run with: ./run.rkt --root Page fuse benchmarks/tests/flat-bug-0.grammar
+// 
+//
+// hints:
+// 1. foldl expression should be placed into iterate { ??; }
+
+traversal fuse {
+    // case CPage {
+    //     iterate flex_horiz_list { recur flex_horiz_list; ??; }
+    //     ??;
+    //     // iterate rel_horiz_list { recur rel_horiz_list; }
+    // }
+    case CPage {
+        ??;
+        iterate flex_horiz_list { ??; recur flex_horiz_list; ??; }
+        ??;
+        iterate rel_horiz_list { ??; recur rel_horiz_list; ??; }
+        ??;
+    }
+    case CFlexHorizontalContainer {
+        ??;
+    }
+    case CRelHorizontalContainer {
+        ??;
+    }
+}
+
+interface Page {
+    // normal shared data
+    input width : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+    output flex_children_max_width : int; // // after ResolveFlexWidths
+}
+class CPage : Page {
+    children {
+        flex_horiz_list : [FlexHorizontalContainer]; // 0 or 1
+        rel_horiz_list : [RelHorizontalContainer]; // 0 or 1
+    }
+    rules {
+        // ==== ResolveFlexWidths ==== //
+        self.flex_children_max_width := foldl default() .. max( @{self.flex_children_max_width}, flex_horiz_list.final0_width );
+        // self.flex_children_max_width := default();
+        self.final0_width := max( self.flex_children_max_width, self.width );
+
+    }
+}
+
+interface FlexHorizontalContainer {
+    // normal shared data
+    input width : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+    output flex_children_accu_width : int;
+}
+class CFlexHorizontalContainer : FlexHorizontalContainer {
+    children {
+    }
+    rules {
+        // ==== ResolveFlexWidths ==== //
+        self.flex_children_accu_width := default();
+        self.final0_width := default();
+    }
+}
+
+interface RelHorizontalContainer {
+    // normal shared data
+    input width : int;
+    input rel_width : int;
+
+    output final0_width : int; // after ResolveFlexWidths
+}
+class CRelHorizontalContainer : RelHorizontalContainer {
+    children {
+    }
+    rules {
+        // ==== ResolveRelativeWidth ==== //
+        self.final0_width := default();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

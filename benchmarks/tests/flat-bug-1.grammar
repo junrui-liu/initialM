@@ -1,6 +1,6 @@
 // this deals with ResolveFlexWidths (post-order)
 // this also deals with ResolveRelativeWidth (pre-order)
-// run with: ./run.rkt --root Page fuse benchmarks/tests/flat-bug.grammar
+// run with: ./run.rkt --root Page fuse benchmarks/tests/flat-bug-1.grammar
 // 
 //
 // hints:
@@ -31,8 +31,7 @@ interface Page {
     // normal shared data
     input width : int;
 
-    output final0_width : int; // after ResolveFlexWidths
-    output flex_children_max_width : int; // // after ResolveFlexWidths
+    output final0_width : int; // // after ResolveFlexWidths
 }
 class CPage : Page {
     children {
@@ -41,9 +40,8 @@ class CPage : Page {
     }
     rules {
         // ==== ResolveFlexWidths ==== //
-        self.flex_children_max_width := foldl default() .. max( @{self.flex_children_max_width}, flex_horiz_list.final0_width );
-        // self.flex_children_max_width := default();
-        self.final0_width := max( self.flex_children_max_width, self.width );
+        self.final0_width := foldl default() .. max( @{self.final0_width}, flex_horiz_list.final0_width );
+        // self.final0_width := default();
 
     }
 }
@@ -52,15 +50,13 @@ interface FlexHorizontalContainer {
     // normal shared data
     input width : int;
 
-    output final0_width : int; // after ResolveFlexWidths
-    output flex_children_accu_width : int;
+    output final0_width : int;
 }
 class CFlexHorizontalContainer : FlexHorizontalContainer {
     children {
     }
     rules {
         // ==== ResolveFlexWidths ==== //
-        self.flex_children_accu_width := default();
         self.final0_width := default();
     }
 }

@@ -2,12 +2,11 @@
 
 ; Checking synthesizer for language of tree traversal schedules
 
-(require rosette/lib/angelic
-         racket/promise
-         "../schedule/enumerate.rkt"
+(require "../schedule/enumerate.rkt"
+         "../grammar/syntax.rkt"
+         "../grammar/tree.rkt"
          "../utility.rkt"
-         "../tree.rkt"
-         "interpreter.rkt")
+         "interpreter.rkt"  rosette/lib/match rosette/lib/angelic)   
 
 (provide complete-sketch)
 
@@ -15,7 +14,8 @@
   (build-list n (thunk* (apply choose* xs))))
 
 (define (complete-sketch G sketch examples)
-  (let ([schedule (instantiate-sketch multichoose* G sketch)]
+  (printf "Debug by Yu \n")
+  (let ([schedule (instantiate-sketch G sketch)]
         [initial-time (current-milliseconds)])
 
     (for ([tree examples])

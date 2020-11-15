@@ -7,7 +7,7 @@
          rosette/solver/mip/cplex
          rosette/solver/smt/z3)
 
-(provide permute iter-permuted for/permuted for*/permuted join-threads join debug
+(provide permute iter-permuted for*/permuted join-threads join debug
          ref? deref set-ref! break clear
          (rename-out [new-ref ref] [solve-trace solve]))
 
@@ -28,7 +28,7 @@
 
 ; Generate a fresh binary integer symbol.
 (define (bit*)
-  (define-symbolic* b integer?)
+  (define-symbolic* b integer?) ;; either true or false 0/1 ILP
   (assert (<= 0 b 1))
   b)
 
@@ -40,9 +40,9 @@
   (let* ([n (length elements)]
          [matrix (build-matrix k n (const* bit*))])
     (for ([row (matrix-rows matrix)])
-      (assert (<= (vector-sum row) 1))) ; distinct choice
+      (assert (<= (vector-sum row) 1))) ; each hole can choose at most one statement
     (for ([column (matrix-columns matrix)])
-      (assert (<= (vector-sum column) 1))) ; unique choice
+      (assert (<= (vector-sum column) 1))) ; each statement can be used by at most one hole
     (permuted matrix elements)))
 
 ; Instantiate a symbolic value (to include a symbolic permutation) according
@@ -109,14 +109,6 @@
             [block blocks])
         (push! residue (cmd:assume guard block))))
     (flush-residue!)))
-
-; Syntactic sugar for iter-permuted.
-(define-syntax-rule (for/permuted ([name expr]) body ...)
-  (let ([value expr])
-    (if (permuted? value)
-        (iter-permuted value (λ (name) body ...))
-        (let ([name value])
-          body ...))))
 
 ; Handy wrapper around for/permuted
 (define-syntax-rule (for*/permuted ([name expr]) body ...)
@@ -191,27 +183,27 @@
   (define dependent (apply + (hash-ref! dependency location null)))
   ;(assert (<= 0 dependency 1) "|\\- 0 <= dependency <= 1")
   (cond
-    [(eqv? assumption 1)
+    [(eqv? assumption 1) ; basecase: assume -> dependency
      (assert (= dependent 1) "assumption |\\- dependency")]
     [(eqv? dependent 0)
      (assert (= assumption 0) "!dependency |\\- !assumption")]
-    [(not (or (eqv? assumption 0) (eqv? dependent 1)))
+    [(not (or (eqv? assumption 0) (eqv? dependent 1))) ; assume -> dependency
      (assert (<= assumption dependent) "|- assumption -\\-> dependency")]))
 
 (define (trace-write! location assumption [dependency dependency])
   (hash-update! dependency
                 location
-                (curry cons assumption)
+                (curry cons assumption) ;; a write on location depends on all vars in the pre-condition
                 null))
 
 (define (trace-exit!)
-  (for ([dependent (hash-values dependency)])
-    (assert (<= 0 (apply + dependent) 1))))
+  (for ([dependent (hash-values dependency)]) ;; reset the symbolic var: 0 or 1
+    (assert (<= 0 (apply + dependent) 1)))) 
 
 ; Rollback after reaching trivially impossible path
 (define (rollback exn)
   (let ([phi (conjoin* path-condition)])
-    (assert (= phi 0) "|- !assumption")))
+    (assert (= phi 0) "|- !assumption"))) ;; assert that the current path cond is infeasible
 
 ; Evaluate residual program commands.
 (define (evaluate-residue! program [shared-dependency null])
@@ -232,13 +224,9 @@
       [(cmd:write (ref location))
        (let ([assumption (conjoin* path-condition)])
          (trace-write! location assumption dependency)
-         (for-each (curry trace-write! location assumption) shared-dependency))]
-      [(cmd:join left right)
-       (let ([initial-dependency (hash-copy dependency)])
-         (evaluate-residue! left shared-dependency)
-         (let ([final-dependency dependency])
-           (shadow! ([dependency initial-dependency])
-             (evaluate-residue! right (cons final-dependency shared-dependency)))))])))
+         ;; all perform write over each location in the shared memory. Useless?
+        ;;;  (for-each (curry trace-write! location assumption) shared-dependency)
+         )])))
 
 ; Evaluate the accumulated residual program if in a quiescent state
 (define (flush-residue!)

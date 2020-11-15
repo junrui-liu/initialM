@@ -55,16 +55,17 @@
 ; symbolc schedule.
 (define (instantiate-sketch G sketch)
   (match sketch
-    [(ag:sequential left-sched right-sched)
-     (ag:sequential (instantiate-sketch G left-sched)
-                    (instantiate-sketch G right-sched))]
-    [(ag:parallel left-sched right-sched)
-     (ag:parallel (instantiate-sketch G left-sched)
-                  (instantiate-sketch G right-sched))]
+    ;;; [(ag:sequential left-sched right-sched)
+    ;;;  (ag:sequential (instantiate-sketch G left-sched)
+    ;;;                 (instantiate-sketch G right-sched))]
+    ;;; [(ag:parallel left-sched right-sched)
+    ;;;  (ag:parallel (instantiate-sketch G left-sched)
+    ;;;               (instantiate-sketch G right-sched))]
     [(ag:traverse order)
      (instantiate-traversal-sketch G (ag:grammar-ref/traversal G order))]
-    [(ag:traversal order visitors)
-     (instantiate-traversal-sketch G sketch)]))
+    ;;; [(ag:traversal order visitors)
+    ;;;  (instantiate-traversal-sketch G sketch)]
+     ))
 
 ; Enumerate schedule sketches for an attribute grammar G, bounded by the number
 ; of traversal passes up to n.

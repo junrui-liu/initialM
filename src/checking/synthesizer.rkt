@@ -14,7 +14,6 @@
   (build-list n (thunk* (apply choose* xs))))
 
 (define (complete-sketch G sketch examples)
-  (printf "Debug by Yu \n")
   (let ([schedule (instantiate-sketch G sketch)]
         [initial-time (current-milliseconds)])
 

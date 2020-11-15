@@ -164,21 +164,16 @@
                      (assert (= (+ w z) (+ x y)))
                      z)))])))
 
-(define (trace-read! location assumption [dependency dependency])
-  (define dependent (apply + (hash-ref! dependency location null)))
-  ;(assert (<= 0 dependency 1) "|\\- 0 <= dependency <= 1")
-  (cond
-    [(eqv? assumption 1) ; basecase: assume -> dependency
-     (assert (= dependent 1) "assumption |\\- dependency")]
-    [(eqv? dependent 0)
-     (assert (= assumption 0) "!dependency |\\- !assumption")]
-    [(not (or (eqv? assumption 0) (eqv? dependent 1))) ; assume -> dependency
-     (assert (<= assumption dependent) "|- assumption -\\-> dependency")]))
+(define (trace-read! location guard-read [dependency dependency])
+  (define guard-write (apply + (hash-ref! dependency location null)))
+  ;;guard-write: Guard where original write is performed
+  ;;guard-read: Guard where the current read is performed
+     (assert (<= guard-read guard-write) "|- assumption -\\-> dependency"))
 
-(define (trace-write! location assumption [dependency dependency])
+(define (trace-write! location guard [dependency dependency])
   (hash-update! dependency
                 location
-                (curry cons assumption) ;; a write on location depends on all vars in the pre-condition
+                (curry cons guard) ;; a write on location depends on all vars in the pre-condition
                 null))
 
 (define (trace-exit!)

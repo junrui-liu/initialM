@@ -1,5 +1,4 @@
 #lang rosette
-
 ; Interpreter for language of tree traversal schedules
 
 (require "../utility.rkt"
@@ -42,9 +41,7 @@
     (cons attr (box #f))))
 
 (define (interpret schedule tree)
-  (match schedule
-    [(ag:traversal order visitors)
-     (traverse schedule tree)]))
+  (traverse schedule tree))
 
 (define (traverse trav self)
   (define class (tree-class self))
@@ -97,13 +94,6 @@
                         (define rule (ag:class-ref*/rule class attr))
                         (define eval
                           (curry evaluate self #:iterator child #:cursor node #:accumulator state-))
-                        ;; (match attr
-                        ;;   [(cons (== child) field)
-                        ;;    (set-box! (tree-ref/field node field)
-                        ;;              (eval (ag:rule-formula rule)))]
-                        ;;   [_
-                        ;;    (set-box! (dict-ref state+ attr)
-                        ;;              (eval (ag:rule-fold-next rule)))])
                         (if (ag:rule-folds? rule)
                             (set-box! (dict-ref state+ attr)
                                       (eval (ag:rule-fold-next rule)))

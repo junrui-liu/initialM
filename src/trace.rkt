@@ -7,7 +7,7 @@
          rosette/solver/mip/cplex
          rosette/solver/smt/z3)
 
-(provide permute iter-permuted for*/permuted join-threads join debug
+(provide permute iter-permuted for*/permuted debug
          ref? deref set-ref! break clear
          (rename-out [new-ref ref] [solve-trace solve]))
 
@@ -117,21 +117,6 @@
       (if (permuted? name)
           (iter-permuted name (λ (name) body ...))
           (begin body ...)))))
-
-; Record that two threads ran concurrently, to later check data independence.
-(define (join-threads do-left do-right)
-  (let ([left-block ((residualize do-left))]
-        [right-block ((residualize do-right))])
-    (push! residue (cmd:join left-block right-block))
-    (flush-residue!)))
-
-; Syntactic sugar for join-threads.
-(define-syntax join
-  (syntax-rules ()
-    [(join body)
-     body]
-    [(join body bodies ...)
-     (join-threads (thunk body) (thunk (join bodies ...)))]))
 
 ; Create an empty reference.
 (define (new-ref v)

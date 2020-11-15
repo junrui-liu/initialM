@@ -43,12 +43,6 @@
 
 (define (interpret schedule tree)
   (match schedule
-    [(ag:sequential left-sched right-sched)
-     (interpret left-sched tree)
-     (interpret right-sched tree)]
-    [(ag:parallel left-sched right-sched)
-     (join (interpret left-sched tree)
-           (interpret right-sched tree))]
     [(ag:traversal order visitors)
      (traverse schedule tree)]))
 

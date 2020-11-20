@@ -1,0 +1,59 @@
+// 
+// run with: ./run.rkt --root HVBox fuse benchmarks/tests/my-toy.grammar
+//
+// this works but takes slightly long
+
+traversal fuse {
+    case HBox {
+        recur l;
+        recur r;
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
+}
+
+interface HVBox {
+    output w : int;
+    output h : int;
+}
+class HBox : HVBox {
+    children {
+        l : HVBox;
+        r : HVBox;
+    }
+    rules {
+        self.h := l.h + self.w;
+        self.w := l.w + r.w;
+    }
+}
+class Leaf : HVBox {
+    children {
+
+    }
+    rules {
+        self.w := default();
+        self.h := default();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

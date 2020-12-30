@@ -1,3 +1,3 @@
-# initialH: Experimental Version for Tree Traversal Synthesis
+# initialH: Experimental Tree Traversal Synthesis
 
 (under development; no commands available)

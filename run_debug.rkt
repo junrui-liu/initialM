@@ -10,14 +10,9 @@
          "src/grammar/syntax.rkt"
          "src/grammar/tree.rkt"
          "src/schedule/parse.rkt"
-         ; "src/tracing/synthesizer.rkt"
          "src/checking/synthesizer.rkt"
-         "src/backend/generate.rkt"
-         "src/backend/printer.rkt"
 )
 
-(define *root* (make-parameter 'Root))
-(define *output* (make-parameter "browser/src/layout.rs"))
 
 (define (parse-grammar filename)
 	(define G (file->grammar filename))
@@ -44,20 +39,15 @@
 	(foldr ag:sequential (first traversals) (rest traversals))
 )
 
-; (define classname "Node")
-; (*root* (string->symbol classname))
-; (define schedule-sketch "fusion")
-; (define grammar-filename "./benchmarks/molly/molly0.grammar")
-
-(define classname "HVBox")
-(*root* (string->symbol classname))
-(define schedule-sketch "fuse")
-(define grammar-filename "./benchmarks/tests/my-toy.grammar")
+(define classname "Node")
+(define rootname (string->symbol classname))
+(define schedule-sketch "fusion")
+(define grammar-filename "./benchmarks/molly/molly0.grammar")
 
 ; (printf "> schedule sketch is:\n~a\n" schedule-sketch)
 (define G (parse-grammar grammar-filename))
 ; (printf "> Grammar is:\n~a\n" G)
-(define E (tree-examples G (*root*)))
+(define E (tree-examples G rootname))
 ; (for ([e E])
 ; 	(printf "> Tree is:\n~a\n" (inspect-tree e))
 ; )
@@ -69,8 +59,5 @@
 (when S*
 	(define DS* (schedule->string S*))
 	(displayln DS*)
-	(define P (generate-program G S*))
-	(define file (open-output-file (*output*) #:mode 'text #:exists 'replace))
-	(parameterize ([current-output-port file]) (print-program P))
 )
 

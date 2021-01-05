@@ -4,6 +4,7 @@
 
 (require (prefix-in xml: xml)
          "../utility.rkt"
+         "../check.rkt"
          "syntax.rkt")
 
 (provide (struct-out tree)
@@ -15,9 +16,12 @@
                      [ref box]
                      [deref unbox]
                      [set-ref! set-box!])
+         inspect-tree
          tree-ref/field
          tree-ref/child
-         tree-select
+         tree-ref/ready
+         tree-select/field
+         tree-select/ready
          tree-copy
          xml->tree
          xexpr->tree
@@ -38,14 +42,33 @@
 (define (set-ref! b v) ((*set-ref!*) b v))
 
 ; TODO: Maybe represent fields with a prefix tree.
-(struct tree (class fields children) #:transparent)
+(struct tree (class fields readys children) #:mutable #:transparent)
+(define (inspect-tree arg-tree)
+  (format "~a"
+    (append
+      (list
+        (ag:class-name (tree-class arg-tree))
+      )
+      (for/list ([c (tree-children arg-tree)]) 
+        (format "~a=~a"
+          (car c)
+          (inspect-tree (cdr c))
+        )
+      )
+    )
+  )
+)
 
 (define (make-node class children)
   (define fields
     (for/list ([label (ag:class-labels* class)])
       (cons (ag:label-name label) (ref (ag:label/in? label)))))
-
-  (tree class fields children))
+  (define readys
+    (for/list ([label (ag:class-labels* class)])
+      (cons (ag:label-name label) (rit*))
+    )
+  )
+  (tree class fields readys children))
 
 (define (tree-ref/field tree label)
   (dict-ref (tree-fields tree) label))
@@ -53,7 +76,10 @@
 (define (tree-ref/child tree name)
   (dict-ref (tree-children tree) name))
 
-(define (tree-select self attr #:iterator [iter #f] #:cursor [cur #f])
+(define (tree-ref/ready tree b)
+  (dict-ref (tree-readys tree) b))
+
+(define (tree-select/field self attr #:iterator [iter #f] #:cursor [cur #f])
   (match attr
     [(cons 'self field)
      (tree-ref/field self field)]
@@ -61,6 +87,15 @@
      (tree-ref/field cur field)]
     [(cons child field)
      (tree-ref/field (tree-ref/child self child) field)]))
+
+(define (tree-select/ready self attr #:iterator [iter #f] #:cursor [cur #f])
+  (match attr
+    [(cons 'self field)
+     (tree-ref/ready self field)]
+    [(cons (== iter) field)
+     (tree-ref/ready cur field)]
+    [(cons child field)
+     (tree-ref/ready (tree-ref/child self child) field)]))
 
 (define (tree-copy node)
   (define fields
@@ -74,7 +109,11 @@
                 (map tree-copy subtree)
                 (tree-copy subtree)))))
 
-  (tree (tree-class node) fields children))
+  (define readys
+    (for/list ([(label value) (in-dict (tree-readys node))])
+      (cons label (rit*))))
+
+  (tree (tree-class node) fields readys children))
 
 ; derive a quoted instance of an FTL tree structure for a grammar in IR form
 ; given an XML string
@@ -109,11 +148,15 @@
          (for/list ([label (ag:class-labels* class)])
            (cons (ag:label-name label) (ref #f))))
 
+       (define readys
+        (for/list ([label (ag:class-labels* class)])
+          (cons (ag:label-name label) (rit*))))
+
        (for ([(label value) (in-dict xattributes)])
          (let ([value (read (open-input-string (first value)))])
            (set-ref! (dict-ref fields label) value)))
 
-       (tree class fields children)]
+       (tree class fields readys children)]
 
       [(list-rest class-name children)
        (recur (list class-name null children))]
@@ -131,13 +174,21 @@
 
 ; Annotate the tree with abstract attribute information.
 (define (tree-annotate node)
-  (make-node (tree-class node)
-             (dict-map-value (tree-children node)
-                             (distribute tree-annotate))))
+  (define tmp0
+    (make-node (tree-class node)
+               (dict-map-value (tree-children node)
+                               (distribute tree-annotate)
+               )
+    )
+  )
+  (printf ">>> node is:~a\n" tmp0)
+  tmp0
+)
 
 ; Validate some property of every output attribute value.
 (define (tree-validate tree check)
-  (for ([(label value) (in-dict (tree-fields tree))])
+  ; (for ([(label value) (in-dict (tree-fields tree))])
+  (for ([(label value) (in-dict (tree-readys tree))])
     (displayln `(check ,(ag:class-name (tree-class tree)) ,label))
     (check value))
   (for ([(name subtree) (in-dict (tree-children tree))])
@@ -161,7 +212,7 @@
                     ([class (ag:interface-classes interface)])
             (match (ag:class-children* class)
               [(list (ag:child/seq names _) ...)
-               (cons (tree class null (map list names)) leaf-nodes)]
+               (cons (tree class null null (map list names)) leaf-nodes)]
               [_
                leaf-nodes])))))
 
@@ -177,7 +228,7 @@
                (map (curry cons name) (lookup leaf-variants kind))]
               [(ag:child/seq name (ag:interface kind _ _))
                (list (cons name (lookup leaf-variants kind)))])))
-        (map (curry tree class null)
+        (map (curry tree class null null)
              (apply cartesian-product child-variants))))
     (cons (ag:interface-name interface) (append* class-variants))))
 
@@ -197,7 +248,7 @@
   (for ([class (ag:grammar-classes G)]
         #:when (andmap ag:child/seq? (ag:class-children* class)))
     (let ([children (ag:class-children* class)])
-      (plant! (tree class null (map (compose list ag:child-name) children)))
+      (plant! (tree class null null (map (compose list ag:child-name) children)))
       (when (null? children)
         (dequeue! class))))
 
@@ -234,6 +285,6 @@
                          (append (list) subtrees))))])))
     ;;; (pretty-display children)
     ;;; (assert #f)
-    (map (curry tree class null) (apply cartesian-product children)))
+    (map (curry tree class null null) (apply cartesian-product children)))
 
   (append-map construct (ag:interface-classes (ag:grammar-ref/interface G root))))

@@ -3,7 +3,7 @@
 ; Parser and serializer for language of attribute grammars
 
 (require "../utility.rkt"
-         "syntax.rkt"
+         "./syntax.rkt"
          parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)

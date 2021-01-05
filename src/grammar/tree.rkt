@@ -5,17 +5,9 @@
 (require (prefix-in xml: xml)
          "../utility.rkt"
          "../check.rkt"
-         "syntax.rkt")
+         "./syntax.rkt")
 
 (provide (struct-out tree)
-         (rename-out [*ref?* *box?*]
-                     [*ref* *box*]
-                     [*deref* *unbox*]
-                     [*set-ref!* *set-box!*]
-                     [ref? box?]
-                     [ref box]
-                     [deref unbox]
-                     [set-ref! set-box!])
          inspect-tree
          tree-ref/field
          tree-ref/child
@@ -23,25 +15,11 @@
          tree-select/field
          tree-select/ready
          tree-copy
-         xml->tree
-         xexpr->tree
-         file->tree
          tree-size
          tree-annotate
          tree-validate
          tree-examples)
 
-(define *ref?* (make-parameter box?))
-(define *ref* (make-parameter box))
-(define *deref* (make-parameter unbox))
-(define *set-ref!* (make-parameter set-box!))
-
-(define (ref? b) ((*ref?*) b))
-(define (ref v) ((*ref*) v))
-(define (deref b) ((*deref*) b))
-(define (set-ref! b v) ((*set-ref!*) b v))
-
-; TODO: Maybe represent fields with a prefix tree.
 (struct tree (class fields readys children) #:mutable #:transparent)
 (define (inspect-tree arg-tree)
   (format "~a"
@@ -62,10 +40,10 @@
 (define (make-node class children)
   (define fields
     (for/list ([label (ag:class-labels* class)])
-      (cons (ag:label-name label) (ref (ag:label/in? label)))))
+      (cons (ag:label-name label) (slot (ag:label/in? label)))))
   (define readys
     (for/list ([label (ag:class-labels* class)])
-      (cons (ag:label-name label) (rit*))
+      (cons (ag:label-name label) (slot #f))
     )
   )
   (tree class fields readys children))
@@ -100,7 +78,7 @@
 (define (tree-copy node)
   (define fields
     (for/list ([(label value) (in-dict (tree-fields node))])
-      (cons label (ref (deref value)))))
+      (cons label (slot (slot-v value)))))
 
   (define children
     (for/list ([(name subtree) (in-dict (tree-children node))])
@@ -111,63 +89,9 @@
 
   (define readys
     (for/list ([(label value) (in-dict (tree-readys node))])
-      (cons label (rit*))))
+      (cons label (slot #f))))
 
   (tree (tree-class node) fields readys children))
-
-; derive a quoted instance of an FTL tree structure for a grammar in IR form
-; given an XML string
-(define (xml->tree G xml-string)
-  (xexpr->tree G (xml:string->xexpr xml-string)))
-
-; Convert the X-expression tree into the internal tree representation. Tags are
-; interpreted as classnames, and attribute values are parsed as Racket-serialized
-; values (i.e., parsed with Racket's read). Children are assigned to the child
-; labels in the order given by the grammar, with a sequence child consuming all
-; remaining child X-expressions. Therefore, this procedure only supports
-; attribute grammars whose classes have at most one sequence child as their last-
-; declared child.
-(define (xexpr->tree G xexpr)
-  (let ([recur (curry xexpr->tree G)])
-    (match xexpr
-      [(list-rest class-name
-                  (and xattributes (list (list (? symbol?) (? string?)) ...))
-                  xcontent)
-
-       (define class (ag:grammar-ref/class G class-name))
-
-       (define children
-         (let ([subtrees (map recur (filter list? xcontent))])
-           (match (ag:class-children* class)
-             [(list (ag:child/one names _) ...)
-              (map cons names subtrees)]
-             [(list (ag:child/seq name _))
-              (cons name subtrees)])))
-
-       (define fields
-         (for/list ([label (ag:class-labels* class)])
-           (cons (ag:label-name label) (ref #f))))
-
-       (define readys
-        (for/list ([label (ag:class-labels* class)])
-          (cons (ag:label-name label) (rit*))))
-
-       (for ([(label value) (in-dict xattributes)])
-         (let ([value (read (open-input-string (first value)))])
-           (set-ref! (dict-ref fields label) value)))
-
-       (tree class fields readys children)]
-
-      [(list-rest class-name children)
-       (recur (list class-name null children))]
-
-      [_
-       (raise-arguments-error 'xexpr->tree
-                              "could not convert X-expression to tree"
-                              'xexpr xexpr)])))
-
-(define (file->tree G filename)
-  (xml->tree G (file->string filename #:mode 'text)))
 
 (define (node-attributes node)
   (map ag:label-name (ag:class-labels* (tree-class node))))
@@ -181,7 +105,7 @@
                )
     )
   )
-  (printf ">>> node is:~a\n" tmp0)
+  ; (printf ">>> node is:~a\n" tmp0)
   tmp0
 )
 
@@ -232,35 +156,6 @@
              (apply cartesian-product child-variants))))
     (cons (ag:interface-name interface) (append* class-variants))))
 
-; TODO: Complete this cleaner version of tree-examples
-(define (tree-examples* G root)
-  (define queue
-    (for/hasheq ([interface (ag:grammar-interfaces G)])
-      (values interface
-              (list->mutable-seteq (ag:interface-classes interface)))))
-  (define (dequeue! class)
-    (set-remove! (hash-ref queue (ag:class-interface class)) class))
-
-  (define forest (make-hasheq))
-  (define (plant! node)
-    (hash-update! forest (tree-class node) (curry cons node) null))
-
-  (for ([class (ag:grammar-classes G)]
-        #:when (andmap ag:child/seq? (ag:class-children* class)))
-    (let ([children (ag:class-children* class)])
-      (plant! (tree class null null (map (compose list ag:child-name) children)))
-      (when (null? children)
-        (dequeue! class))))
-
-  ; until queue empty do:
-  ;   find class in queue s.t. children class-saturated in forest:
-  ;   construct nodes of class for cartesian product of child classes
-  ;   // always pick shortest or tallest?
-  ;   // once a node is adopted, there's no sense in duplicating it elsewhere.
-  ;   // how can we optimize for many short trees rather than a few very tall trees?
-  ;   insert nodes into forest
-  ;   remove class from queue
-  #f)
 
 ; Return a set of example tree skeletons that include every parent-child class
 ; pairing permitted by the grammar.

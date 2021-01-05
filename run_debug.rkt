@@ -3,15 +3,18 @@
 
 ; Script to run the synthesizer on a given attribute grammar.
 
-(require racket/cmdline
-         racket/pretty
-         "src/grammar/parse.rkt"
-         "src/grammar/validate.rkt"
-         "src/grammar/syntax.rkt"
-         "src/grammar/tree.rkt"
-         "src/schedule/parse.rkt"
-         "src/checking/synthesizer.rkt"
+(require 
+	racket/cmdline
+	racket/pretty
+	"./src/utility.rkt"
+	"./src/grammar/parse.rkt"
+	"./src/grammar/validate.rkt"
+	"./src/grammar/syntax.rkt"
+	"./src/grammar/tree.rkt"
+	"./src/schedule/parse.rkt"
+	"./src/schedule/enumerate.rkt"
 )
+
 
 
 (define (parse-grammar filename)
@@ -19,6 +22,7 @@
 	(validate-grammar G)
 	G
 )
+
 
 ; FIXME: This is a horrid hack and only supports sequential schedule sketches.
 (define (parse-schedule-sketch G S0)
@@ -44,20 +48,75 @@
 (define schedule-sketch "fusion")
 (define grammar-filename "./benchmarks/molly/molly0.grammar")
 
-; (printf "> schedule sketch is:\n~a\n" schedule-sketch)
+; G: grammar
 (define G (parse-grammar grammar-filename))
-; (printf "> Grammar is:\n~a\n" G)
+(printf "> grammar is:\n~a\n" G)
+
+; E: tree set
 (define E (tree-examples G rootname))
-; (for ([e E])
-; 	(printf "> Tree is:\n~a\n" (inspect-tree e))
-; )
-(define S (parse-schedule-sketch G schedule-sketch))
-; (printf "> Schedule is:\n~a\n" S)
-(define S* (complete-sketch G S E))
-; (printf "> Done synthesis.\n")
-; (printf "> Complete schedule is:\n~a\n" S*)
-(when S*
-	(define DS* (schedule->string S*))
-	(displayln DS*)
+(for ([e E])
+	; e: (struct tree (class fields readys children) #:mutable #:transparent)
+	;  | "fields" "readys" "children" are currently null
+	;  | e.g., #(struct:tree #<class> () () ())
+	(printf "> tree is:\n~a\n" (inspect-tree e))
 )
+(printf "> last tree is:\n~a\n" (list-ref (reverse E) 0))
+
+; S: #(struct:traverse fusion)
+;  | this is just a invocation
+;  | e.g., #(struct:traverse fusion)
+(define S (parse-schedule-sketch G schedule-sketch))
+(printf "> S is:\n~a\n" S)
+
+; schedule: (struct traversal (name visitors) #:transparent)
+;         | now it becomes a definition
+;         | e.g., #(struct:traversal 
+;                   fusion
+;                   (
+;                     #(struct:visitor 
+;                       #<class> 
+;                       (
+;                         #(struct:recur lk) 
+;                         #(struct:recur rk) 
+;                         (choose 
+;                           #(struct:eval (self . puff)) 
+;                           #(struct:eval (self . pie)))
+;                         )
+;                       ) 
+;                     #(struct:visitor 
+;                       #<class> 
+;                       (
+;                         (choose 
+;                           #(struct:eval (self . puff)) 
+;                           #(struct:eval (self . pie)))
+;                         )
+;                       )
+;                   )
+;                 )
+(define schedule (instantiate-sketch G S))
+(printf "> schedule is:\n~a\n" schedule)
+
+
+(for ([e E])
+	; ae: (struct tree (class fields readys children) #:mutable #:transparent)
+	;   | all struct members are currently filled
+	;   | e.g., #(struct:tree 
+	;             #<class> 
+	;             (
+	;               (puff . #(struct:slot #f)) 
+	;               (pie . #(struct:slot #f))
+	;             ) 
+	;             (
+	;               (puff . #(struct:slot #f)) 
+	;               (pie . #(struct:slot #f))
+	;             )
+	;             () --> no children
+	;           )
+	(define ae (tree-annotate e))
+	(printf "> annotated tree is:\n~a\n" ae)
+
+	; then start the interpretation
+	
+)
+(pause)
 

@@ -2,7 +2,6 @@
 
 ; Helper functions and common initialization.
 
-(require racket/struct)
 (provide (all-defined-out))
 (port-count-lines-enabled #t)
 (current-bitwidth #f)
@@ -10,6 +9,42 @@
 (define (pause)
 	(printf "# pause...\n")
 	(read-line)
+)
+
+; lifted dict-ref
+(define (ass-ref list key) 
+	(cond
+		[(symbol? key) (match list
+			[(list cur rest ...)
+				(if (equal? (car cur) key) (cdr cur) (ass-ref rest key))
+			]
+			; otherwise just let it throw an error/exception, and rosette will cut this
+		)]
+		[(union? key) (for/all ([pp key])
+			(ass-ref list pp)
+		)]
+		[else (printf "# exception/ass-ref: unsupported key ~a" key)]
+	)
+)
+
+; lifted in-dict
+(define (in-ass? list key)
+	(cond
+		[(symbol? key) (begin
+			(match list
+				[(list) #f]
+				[(list cur rest ...)
+					(if (equal? (car cur) key) #t (in-ass? rest key))
+				]
+			)
+		)]
+		[(union? key) (begin
+			(for/all ([pp key])
+				(in-ass? list pp)
+			)
+		)]
+		[else #f]
+	)
 )
 
 (define (oracle type)
@@ -208,14 +243,6 @@
 
 (define (matrix-columns mat)
 	(matrix-rows (matrix-transpose mat))
-)
-
-(define (struct-map f str)
-	(let-values ([(str-typ _) (struct-info str)])
-		(apply (struct-type-make-constructor str-typ)
-			(map f (struct->list str))
-		)
-	)
 )
 
 (define-syntax-rule (push! name expr)

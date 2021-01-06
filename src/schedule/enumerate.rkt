@@ -1,16 +1,17 @@
 #lang rosette
 
-(require "../grammar/syntax.rkt")
+(require 
+  "../grammar/syntax.rkt"
+)
 
-(provide *multichoose*
-         instantiate-sketch
-         enumerate-sketches
-         synthesize-schedules)
-
-(define *multichoose* (make-parameter (curry list 'choose)))
+(provide
+  instantiate-sketch
+  enumerate-sketches
+  synthesize-schedules
+)
 
 (define (multichoose . xs)
-  (apply (*multichoose*) xs))
+  (apply (curry list 'multichoose) xs))
 
 (define (enumerate-commands class #:order [order #f] #:iterator [iterator #f])
   (for/list ([rule (ag:class-rules* class)]

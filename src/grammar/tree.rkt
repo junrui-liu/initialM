@@ -4,7 +4,6 @@
 
 (require (prefix-in xml: xml)
          "../utility.rkt"
-         "../check.rkt"
          "./syntax.rkt")
 
 (provide (struct-out tree)
@@ -40,22 +39,22 @@
 (define (make-node class children)
   (define fields
     (for/list ([label (ag:class-labels* class)])
-      (cons (ag:label-name label) (slot (ag:label/in? label)))))
+      (cons (ag:label-name label) (ag:slot (ag:label/in? label)))))
   (define readys
     (for/list ([label (ag:class-labels* class)])
-      (cons (ag:label-name label) (slot #f))
+      (cons (ag:label-name label) (ag:slot #f))
     )
   )
   (tree class fields readys children))
 
 (define (tree-ref/field tree label)
-  (dict-ref (tree-fields tree) label))
+  (ass-ref (tree-fields tree) label))
 
 (define (tree-ref/child tree name)
-  (dict-ref (tree-children tree) name))
+  (ass-ref (tree-children tree) name))
 
 (define (tree-ref/ready tree b)
-  (dict-ref (tree-readys tree) b))
+  (ass-ref (tree-readys tree) b))
 
 (define (tree-select/field self attr #:iterator [iter #f] #:cursor [cur #f])
   (match attr
@@ -77,19 +76,19 @@
 
 (define (tree-copy node)
   (define fields
-    (for/list ([(label value) (in-dict (tree-fields node))])
-      (cons label (slot (slot-v value)))))
+    (for/list ([(label value) (in-ass? (tree-fields node))])
+      (cons label (ag:slot (ag:slot-v value)))))
 
   (define children
-    (for/list ([(name subtree) (in-dict (tree-children node))])
+    (for/list ([(name subtree) (in-ass? (tree-children node))])
       (cons name
             (if (list? subtree)
                 (map tree-copy subtree)
                 (tree-copy subtree)))))
 
   (define readys
-    (for/list ([(label value) (in-dict (tree-readys node))])
-      (cons label (slot #f))))
+    (for/list ([(label value) (in-ass? (tree-readys node))])
+      (cons label (ag:slot #f))))
 
   (tree (tree-class node) fields readys children))
 
@@ -111,11 +110,14 @@
 
 ; Validate some property of every output attribute value.
 (define (tree-validate tree check)
-  ; (for ([(label value) (in-dict (tree-fields tree))])
-  (for ([(label value) (in-dict (tree-readys tree))])
+  (for ([p (tree-readys tree)])
+    (define label (car p))
+    (define value (cdr p))
     (displayln `(check ,(ag:class-name (tree-class tree)) ,label))
     (check value))
-  (for ([(name subtree) (in-dict (tree-children tree))])
+  (for ([p (tree-children tree)])
+    (define name (car p))
+    (define subtree (cdr p))
     (if (list? subtree)
         (for ([node subtree])
           (tree-validate node check))

@@ -6,6 +6,7 @@
 (require 
 	racket/cmdline
 	racket/pretty
+	"./src/checking.rkt"
 	"./src/utility.rkt"
 	"./src/grammar/parse.rkt"
 	"./src/grammar/validate.rkt"
@@ -43,10 +44,17 @@
 	(foldr ag:sequential (first traversals) (rest traversals))
 )
 
+; validation function for tree-validate
+; assert the current attribute is ready
+(define (validate-fn arg-slot)
+	(printf "> validate-fn: ~a\n" arg-slot)
+	(assert (ag:slot-v arg-slot))
+)
+
 (define classname "Node")
 (define rootname (string->symbol classname))
 (define schedule-sketch "fusion")
-(define grammar-filename "./benchmarks/molly/molly0.grammar")
+(define grammar-filename "./benchmarks/molly/molly1.grammar")
 
 ; G: grammar
 (define G (parse-grammar grammar-filename))
@@ -60,7 +68,7 @@
 	;  | e.g., #(struct:tree #<class> () () ())
 	(printf "> tree is:\n~a\n" (inspect-tree e))
 )
-(printf "> last tree is:\n~a\n" (list-ref (reverse E) 0))
+; (printf "> last tree is:\n~a\n" (list-ref (reverse E) 0))
 
 ; S: #(struct:traverse fusion)
 ;  | this is just a invocation
@@ -80,24 +88,26 @@
 ;                         #(struct:recur rk) 
 ;                         (choose 
 ;                           #(struct:eval (self . puff)) 
-;                           #(struct:eval (self . pie)))
+;                           #(struct:eval (self . pie))
 ;                         )
-;                       ) 
+;                       )
+;                     ) 
 ;                     #(struct:visitor 
 ;                       #<class> 
 ;                       (
 ;                         (choose 
 ;                           #(struct:eval (self . puff)) 
-;                           #(struct:eval (self . pie)))
+;                           #(struct:eval (self . pie))
 ;                         )
 ;                       )
+;                     )
 ;                   )
 ;                 )
 (define schedule (instantiate-sketch G S))
 (printf "> schedule is:\n~a\n" schedule)
 
-
-(for ([e E])
+; (for ([e (reverse E)])
+(for ([e (cdr (reverse E))])
 	; ae: (struct tree (class fields readys children) #:mutable #:transparent)
 	;   | all struct members are currently filled
 	;   | e.g., #(struct:tree 
@@ -116,7 +126,14 @@
 	(printf "> annotated tree is:\n~a\n" ae)
 
 	; then start the interpretation
-	
+	(interpret schedule ae)
+	(printf "> interpreted tree is:\n~a\n" ae)
+
+	; validate is reading all attributes
+	(tree-validate ae validate-fn)
+
+	; (solve (assert #t))
+	; (pause)
 )
-(pause)
+
 

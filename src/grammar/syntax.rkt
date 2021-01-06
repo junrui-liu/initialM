@@ -84,6 +84,7 @@
 (struct eval (attribute) #:transparent)
 (struct skip () #:transparent)
 (struct hole () #:transparent)
+(struct slot (v) #:mutable #:transparent)
 (define command? (disjoin iter? recur? eval? skip? hole?))
 
 ; traversal composition (into schedules)

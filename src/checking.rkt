@@ -27,9 +27,16 @@
 ;         | interpret
 ;         | traverse
 ;         | evaluate
-(define (select* clist)
-	(define-symbolic* s integer?)
-	(list-ref clist s)
+(define cdict (make-hash))
+(define (select* nth clist)
+	(if (hash-has-key? cdict nth)
+		(hash-ref cdict nth)
+		(begin
+			(define-symbolic* s integer?)
+			(hash-set! cdict nth (list-ref clist s))
+			(hash-ref cdict nth)
+		)
+	)
 )
 
 (struct denotation (ops fns ite) #:transparent)
@@ -152,7 +159,7 @@
 				(printf "> ag:iter/right child\n")
 				(iterate self child reverse commands trav)
 			]
-			; [(list 'multichoose ev)
+			; [(list 'multichoose nth ev)
 			; 	; (fixme) initiate a for loop for all-combinations-all-permutations
 			; 	(printf "> single choose of ~a\n" command)
 			; 	(printf "> yes?0\n")
@@ -173,11 +180,11 @@
 				(printf "> ag:skip\n")
 				(void)
 			]
-			[(list 'multichoose vs ...)
+			[(list 'multichoose nth vs ...)
 				; (fixme) initiate a for loop for all-combinations-all-permutations
 				(printf "> traverse/multichoose of ~a\n" vs)
 				(define acap (all-combinations-all-permutations vs))
-				(define alist* (select* acap))
+				(define alist* (select* nth acap))
 				; (printf "> alist* is: ~a\n" (pretty-format alist*))
 				(printf "> enter\n")
 				(for/all ([alist alist*])

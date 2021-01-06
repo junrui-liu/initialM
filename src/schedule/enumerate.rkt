@@ -10,8 +10,17 @@
   synthesize-schedules
 )
 
+(define mc-counter 0)
 (define (multichoose . xs)
-  (apply (curry list 'multichoose) xs))
+  (define m
+    (apply 
+      (curry list 'multichoose mc-counter) 
+      xs
+    )
+  )
+  (set! mc-counter (+ 1 mc-counter))
+  m
+)
 
 (define (enumerate-commands class #:order [order #f] #:iterator [iterator #f])
   (for/list ([rule (ag:class-rules* class)]

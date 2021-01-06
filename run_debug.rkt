@@ -47,7 +47,7 @@
 ; validation function for tree-validate
 ; assert the current attribute is ready
 (define (validate-fn arg-slot)
-	(printf "> validate-fn: ~a\n" arg-slot)
+	; (printf "> validate-fn: ~a\n" arg-slot)
 	(assert (ag:slot-v arg-slot))
 )
 
@@ -58,7 +58,7 @@
 
 ; G: grammar
 (define G (parse-grammar grammar-filename))
-(printf "> grammar is:\n~a\n" G)
+; (printf "> grammar is:\n~a\n" G)
 
 ; E: tree set
 (define E (tree-examples G rootname))
@@ -74,7 +74,7 @@
 ;  | this is just a invocation
 ;  | e.g., #(struct:traverse fusion)
 (define S (parse-schedule-sketch G schedule-sketch))
-(printf "> S is:\n~a\n" S)
+; (printf "> S is:\n~a\n" S)
 
 ; schedule: (struct traversal (name visitors) #:transparent)
 ;         | now it becomes a definition
@@ -104,7 +104,7 @@
 ;                   )
 ;                 )
 (define schedule (instantiate-sketch G S))
-(printf "> schedule is:\n~a\n" schedule)
+; (printf "> schedule is:\n~a\n" schedule)
 
 ; (for ([e (reverse E)])
 (for ([e (cdr (reverse E))])
@@ -123,17 +123,27 @@
 	;             () --> no children
 	;           )
 	(define ae (tree-annotate e))
-	(printf "> annotated tree is:\n~a\n" ae)
+	; (printf "> annotated tree is:\n~a\n" ae)
 
 	; then start the interpretation
-	(interpret schedule ae)
-	(printf "> interpreted tree is:\n~a\n" ae)
+	(ex:interpret schedule ae)
+	; (printf "> interpreted tree is:\n~a\n" ae)
 
 	; validate is reading all attributes
 	(tree-validate ae validate-fn)
 
-	; (solve (assert #t))
+
 	; (pause)
 )
 
+(define sol (solve (assert #t)))
+(if (sat? sol)
+	(begin
+		(printf "> SAT\n")
+		(printf (schedule->string schedule sdict sol))
+	)
+	(begin
+		(printf "> UNSAT\n")
+	)
+)
 

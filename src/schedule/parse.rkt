@@ -122,55 +122,68 @@
 (define (file->schedule path)
   (call-with-input-file path parse-schedule #:mode 'text))
 
-(define/match (schedule->string sched)
-  [((ag:sequential left-sched right-sched))
-   (format "~a ;; ~a"
-           (schedule->string left-sched)
-           (schedule->string right-sched))]
-  [((ag:parallel left-sched right-sched))
-   (format "(~a || ~a)"
-           (schedule->string left-sched)
-           (schedule->string right-sched))]
-  [((ag:traversal order visitors))
-   (format "traversal ~a {\n~a\n}"
-           order
-           (string-join (map visitor->string visitors) "\n"))])
+(define (schedule->string sched sdict sol)
+  (match sched
+    [(ag:sequential left-sched right-sched)
+     (format "~a ;; ~a"
+             (schedule->string left-sched sdict sol)
+             (schedule->string right-sched sdict sol))]
+    [(ag:parallel left-sched right-sched)
+     (format "(~a || ~a)"
+             (schedule->string left-sched sdict sol)
+             (schedule->string right-sched sdict sol))]
+    [(ag:traversal order visitors)
+     (format "traversal ~a {\n~a\n}"
+             order
+             (string-join (for/list ([v visitors]) (visitor->string v sdict sol)) "\n"))]
+  )
+)
 
 (define indentation (make-parameter 0))
 
 (define (indent)
   (build-string (* (indentation) 2) (thunk* #\ )))
 
-(define/match (visitor->string visitor)
-  [((ag:visitor class commands))
-   (parameterize ([indentation (+ (indentation) 1)])
+(define (visitor->string visitor sdict sol)
+  (match visitor
+    [(ag:visitor class commands)
+     (parameterize ([indentation (+ (indentation) 1)])
+       (define content
+         (parameterize ([indentation (+ (indentation) 1)])
+           (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")))
+       (format "~acase ~a {\n~a\n~a}"
+               (indent)
+               (ag:class-name class)
+               content
+               (indent)))]
+  )
+)
+
+(define (command->string command sdict sol)
+  (match command
+    [(ag:iter/left child commands)
      (define content
        (parameterize ([indentation (+ (indentation) 1)])
-         (string-join (map command->string commands) "\n")))
-     (format "~acase ~a {\n~a\n~a}"
-             (indent)
-             (ag:class-name class)
-             content
-             (indent)))])
-
-(define/match (command->string command)
-  [((ag:iter/left child commands))
-   (define content
-     (parameterize ([indentation (+ (indentation) 1)])
-       (string-join (map command->string commands) "\n")))
-   (format "~aiterate[left] ~a {\n~a\n~a}"
-           (indent) child content (indent))]
-  [((ag:iter/right child commands))
-   (define content
-     (parameterize ([indentation (+ (indentation) 1)])
-       (string-join (map command->string commands) "\n")))
-   (format "~aiterate[right] ~a {\n~a\n~a}"
-           (indent) child content (indent))]
-  [((ag:recur child))
-   (format "~arecur ~a;" (indent) child)]
-  [((ag:eval (cons node label)))
-   (format "~aeval ~a.~a;" (indent) node label)]
-  [((ag:hole)) (format "~a??;" (indent))]
-  [((ag:skip)) (format "~askip;" (indent) (indent))]
-  [((list commands ...))
-   (string-join (map command->string commands) "\n")])
+         (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")))
+     (format "~aiterate[left] ~a {\n~a\n~a}"
+             (indent) child content (indent))]
+    [(ag:iter/right child commands)
+     (define content
+       (parameterize ([indentation (+ (indentation) 1)])
+         (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")))
+     (format "~aiterate[right] ~a {\n~a\n~a}"
+             (indent) child content (indent))]
+    [(ag:recur child)
+     (format "~arecur ~a;" (indent) child)]
+    [(ag:eval (cons node label))
+     (format "~aeval ~a.~a;" (indent) node label)]
+    [(ag:hole) (format "~a??;" (indent))]
+    [(ag:skip) (format "~askip;" (indent) (indent))]
+    ; [(list commands ...)
+    ;  (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")]
+    [(list 'multichoose nth vs ...)
+      (define ccmds (evaluate (hash-ref sdict nth) sol))
+      (string-join (for/list ([c vs]) (command->string c sdict sol)) "\n")
+    ]
+  )
+)

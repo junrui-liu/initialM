@@ -20,7 +20,10 @@ racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmar
 # molly7.grammar: many attributes (takes longer than others to solve)
 racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmarks/molly/molly7.grammar
 
-# grafter/oopsla-example: this takes forever to solve
+# grafter/oopsla-example.grammar: this takes forever to solve
 racket ./run.rkt --interface Node --traversal fuse --grammar ./benchmarks/grafter/oopsla-example.grammar
+
+# hv-toy.grammar
+racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/molly/hv-toy.grammar
 ```
 

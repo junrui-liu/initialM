@@ -1,4 +1,4 @@
- // run with: racket ./run.rkt --root Node fusion benchmarks/molly/molly0.grammar
+ // run with: racket ./run.rkt --root Node fusion benchmarks/molly/molly1.grammar
 
 traversal fusion {
     case Inner {

@@ -1,0 +1,55 @@
+ // run with: racket ./run.rkt --root Node fusion benchmarks/molly/molly2.grammar
+
+traversal fusion {
+    case Inner {
+        recur lk;
+        recur rk;
+        ??;
+    }
+    case Leaf {
+    }
+}
+
+interface Node {
+    output puff : int;
+}
+interface End {
+    output puff : int;
+}
+
+class Inner : Node {
+    children {
+        lk : End;
+        rk : End;
+    }
+    rules {
+        self.puff := 1;
+        lk.puff := 47;
+        rk.puff := 233;
+    }
+}
+class Leaf : End {
+    children {}
+    rules {
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

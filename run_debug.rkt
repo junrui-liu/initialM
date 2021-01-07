@@ -62,12 +62,13 @@
 
 ; E: tree set
 (define E (tree-examples G rootname))
-(for ([e E])
+(printf "> generated ~a tree examples\n" (length E))
+; (for ([e E])
 	; e: (struct tree (class fields readys children) #:mutable #:transparent)
 	;  | "fields" "readys" "children" are currently null
 	;  | e.g., #(struct:tree #<class> () () ())
-	(printf "> tree is:\n~a\n" (inspect-tree e))
-)
+	; (printf "> tree is:\n~a\n" (inspect-tree e))
+; )
 ; (printf "> last tree is:\n~a\n" (list-ref (reverse E) 0))
 
 ; S: #(struct:traverse fusion)
@@ -104,10 +105,10 @@
 ;                   )
 ;                 )
 (define schedule (instantiate-sketch G S))
-; (printf "> schedule is:\n~a\n" schedule)
+(printf "> schedule is:\n~a\n" schedule)
 
-; (for ([e (reverse E)])
-(for ([e (cdr (reverse E))])
+(for ([e (reverse E)])
+; (for ([e (cdr (reverse E))])
 	; ae: (struct tree (class fields readys children) #:mutable #:transparent)
 	;   | all struct members are currently filled
 	;   | e.g., #(struct:tree 
@@ -122,12 +123,13 @@
 	;             )
 	;             () --> no children
 	;           )
+	(printf "> tree is:\n~a\n" (inspect-tree e))
 	(define ae (tree-annotate e))
-	; (printf "> annotated tree is:\n~a\n" ae)
+	(printf "> annotated tree is:\n~a\n" ae)
 
 	; then start the interpretation
-	(ex:interpret schedule ae)
-	; (printf "> interpreted tree is:\n~a\n" ae)
+	(interpret schedule ae)
+	(printf "> interpreted tree is:\n~a\n" ae)
 
 	; validate is reading all attributes
 	(tree-validate ae validate-fn)

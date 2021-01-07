@@ -11,39 +11,53 @@
 	(read-line)
 )
 
-; lifted dict-ref
-(define (ass-ref list key) 
+(define (println-and-exit . msg)
+	(printf "~a\n" (apply format msg))
+	(exit 0)
+)
+
+; (lifted) associate list reference procedure
+;        | only symbols can be keys of associate lists
+;        | this is used in tree struct, e.g., (lk . #(struct:tree #<class> ...)) is a pair
+;        | in schedule there's no associate list, even though there are pairs like #(struct:eval (lk . puff))
+;          and both elements can be union/symbolic, which is out of scope of this procedure
+;        | i.e., this won't support keys like (lk . puff)
+(define (^ass-ref arg-list arg-key)
 	(cond
-		[(symbol? key) (match list
-			[(list cur rest ...)
-				(if (equal? (car cur) key) (cdr cur) (ass-ref rest key))
-			]
-			; otherwise just let it throw an error/exception, and rosette will cut this
+		[(symbol? arg-key) 
+			(match arg-list
+				[(list cur rest ...)
+					(if (equal? (car cur) arg-key) (cdr cur) (^ass-ref rest arg-key))
+				]
+				[(list) (println-and-exit "# exception/^ass-ref: key not found for ~a\n" arg-key)]
+				[_ (println-and-exit "# exception/^ass-ref: input is not a list but ~a\n" arg-list)]
+			)
+		]
+		[(union? arg-key) (for/all ([pp arg-key])
+			(^ass-ref arg-list pp)
 		)]
-		[(union? key) (for/all ([pp key])
-			(ass-ref list pp)
-		)]
-		[else (printf "# exception/ass-ref: unsupported key ~a" key)]
+		[else (println-and-exit "# exception/^ass-ref: unsupported key ~a\n" arg-key)]
 	)
 )
 
-; lifted in-dict
-(define (in-ass? list key)
+; (lifted) associate list has-key? procedure
+(define (^in-ass? arg-list arg-key)
 	(cond
-		[(symbol? key) (begin
-			(match list
+		[(symbol? arg-key) (begin
+			(match arg-list
 				[(list) #f]
 				[(list cur rest ...)
-					(if (equal? (car cur) key) #t (in-ass? rest key))
+					(if (equal? (car cur) arg-key) #t (^in-ass? rest arg-key))
 				]
+				[_ (println-and-exit "# exception/in-ass?: input is not a list but ~a\n" arg-list)]
 			)
 		)]
-		[(union? key) (begin
-			(for/all ([pp key])
-				(in-ass? list pp)
+		[(union? arg-key) (begin
+			(for/all ([pp arg-key])
+				(^in-ass? list pp)
 			)
 		)]
-		[else #f]
+		[else (println-and-exit "# exception/^in-ass?: unsupported key ~a\n" arg-key)]
 	)
 )
 

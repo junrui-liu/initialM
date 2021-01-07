@@ -209,9 +209,9 @@
 
 	(for ([command commands])
 		(match command
-			; [(ag:recur _)
-			; 	(void)
-			; ]
+			[(ag:recur _)
+				(void)
+			]
 			[(ag:skip)
 				(void)
 			]

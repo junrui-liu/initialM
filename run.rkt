@@ -3,21 +3,18 @@
 
 ; Script to run the synthesizer on a given attribute grammar.
 
-(require racket/cmdline
-         racket/pretty
-         "src/grammar/parse.rkt"
-         "src/grammar/validate.rkt"
-         "src/grammar/syntax.rkt"
-         "src/grammar/tree.rkt"
-         "src/schedule/parse.rkt"
-         ; "src/tracing/synthesizer.rkt"
-         "src/checking/synthesizer.rkt"
-         "src/backend/generate.rkt"
-         "src/backend/printer.rkt"
+(require 
+	racket/cmdline
+	racket/pretty
+	"./src/checking.rkt"
+	"./src/utility.rkt"
+	"./src/grammar/parse.rkt"
+	"./src/grammar/validate.rkt"
+	"./src/grammar/syntax.rkt"
+	"./src/grammar/tree.rkt"
+	"./src/schedule/parse.rkt"
+	"./src/schedule/enumerate.rkt"
 )
-
-(define *root* (make-parameter 'Root))
-(define *output* (make-parameter "browser/src/layout.rs"))
 
 (define (parse-grammar filename)
 	(define G (file->grammar filename))
@@ -44,31 +41,133 @@
 	(foldr ag:sequential (first traversals) (rest traversals))
 )
 
+; validation function for tree-validate
+; assert the current attribute is ready
+(define (validate-fn arg-slot)
+	; (printf "> validate-fn: ~a\n" arg-slot)
+	(assert (ag:slot-v arg-slot))
+)
+
+; (define classname "Node")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fusion")
+; (define grammar-filename "./benchmarks/molly/molly5.grammar")
+
+; (define classname "Node")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fuse")
+; (define grammar-filename "./benchmarks/grafter/oopsla-example.grammar")
+
+(define classname null)
+(define rootname null)
+(define schedule-sketch null)
+(define grammar-filename null)
+
 (command-line
 	#:program "initialH"
 	#:once-each
-		[("-R" "--root") classname "Class to use as tree root" (*root* (string->symbol classname))]
-		[("-o" "--out") filename "File to output generated code" (*output* filename)]
-	#:args (schedule-sketch grammar-filename)
-		(begin
-			; (printf "> schedule sketch is:\n~a\n" schedule-sketch)
-			(define G (parse-grammar grammar-filename))
-			; (printf "> Grammar is:\n~a\n" G)
-			(define E (tree-examples G (*root*)))
-			; (for ([e E])
-			; 	(printf "> Tree is:\n~a\n" (inspect-tree e))
-			; )
-			(define S (parse-schedule-sketch G schedule-sketch))
-			; (printf "> Schedule is:\n~a\n" S)
-			(define S* (complete-sketch G S E))
-			; (printf "> Done synthesis.\n")
-			; (printf "> Complete schedule is:\n~a\n" S*)
-			(when S*
-				(define DS* (schedule->string S*))
-				(displayln DS*)
-				(define P (generate-program G S*))
-				(define file (open-output-file (*output*) #:mode 'text #:exists 'replace))
-				(parameterize ([current-output-port file]) (print-program P))
-			)
- 		)
+		[("-i" "--interface") p "root interface to derive example trees from"
+			(set! classname p)
+			(set! rootname (string->symbol classname))
+		]
+		[("-t" "--traversal") p "root traversal to apply"
+			(set! schedule-sketch p)
+		]
+		[("-g" "--grammar") p "path to grammar"
+			(set! grammar-filename p)
+		]
+)
+
+; G: grammar
+(define G (parse-grammar grammar-filename))
+; (printf "> grammar is:\n~a\n" G)
+
+; E: tree set
+(define E (tree-examples G rootname))
+(printf "> generated ~a tree examples\n" (length E))
+; (for ([e E])
+	; e: (struct tree (class fields readys children) #:mutable #:transparent)
+	;  | "fields" "readys" "children" are currently null
+	;  | e.g., #(struct:tree #<class> () () ())
+	; (printf "> tree is:\n~a\n" (inspect-tree e))
+; )
+; (printf "> last tree is:\n~a\n" (list-ref (reverse E) 0))
+
+; S: #(struct:traverse fusion)
+;  | this is just a invocation
+;  | e.g., #(struct:traverse fusion)
+(define S (parse-schedule-sketch G schedule-sketch))
+; (printf "> S is:\n~a\n" S)
+
+; schedule: (struct traversal (name visitors) #:transparent)
+;         | now it becomes a definition
+;         | e.g., #(struct:traversal 
+;                   fusion
+;                   (
+;                     #(struct:visitor 
+;                       #<class> 
+;                       (
+;                         #(struct:recur lk) 
+;                         #(struct:recur rk) 
+;                         (choose 
+;                           #(struct:eval (self . puff)) 
+;                           #(struct:eval (self . pie))
+;                         )
+;                       )
+;                     ) 
+;                     #(struct:visitor 
+;                       #<class> 
+;                       (
+;                         (choose 
+;                           #(struct:eval (self . puff)) 
+;                           #(struct:eval (self . pie))
+;                         )
+;                       )
+;                     )
+;                   )
+;                 )
+(define schedule (instantiate-sketch G S))
+; (printf "> schedule is:\n~a\n" schedule)
+
+(for ([e (reverse E)])
+; (for ([e (cdr (reverse E))])
+	; ae: (struct tree (class fields readys children) #:mutable #:transparent)
+	;   | all struct members are currently filled
+	;   | e.g., #(struct:tree 
+	;             #<class> 
+	;             (
+	;               (puff . #(struct:slot #f)) 
+	;               (pie . #(struct:slot #f))
+	;             ) 
+	;             (
+	;               (puff . #(struct:slot #f)) 
+	;               (pie . #(struct:slot #f))
+	;             )
+	;             () --> no children
+	;           )
+	; (printf "> tree is:\n~a\n" (inspect-tree e))
+	(define ae (tree-annotate e))
+	; (printf "> annotated tree is:\n~a\n" ae)
+
+	; then start the interpretation
+	(interpret schedule ae)
+	; (printf "> interpreted tree is:\n~a\n" ae)
+
+	; validate is reading all attributes
+	(tree-validate ae validate-fn)
+
+
+	; (pause)
+)
+
+(define sol (solve (assert #t)))
+(if (sat? sol)
+	(begin
+		(printf "> SAT\n")
+		(printf (schedule->string schedule sdict sol))
+		(printf "\n")
+	)
+	(begin
+		(printf "> UNSAT\n")
+	)
 )

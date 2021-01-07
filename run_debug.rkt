@@ -16,14 +16,11 @@
 	"./src/schedule/enumerate.rkt"
 )
 
-
-
 (define (parse-grammar filename)
 	(define G (file->grammar filename))
 	(validate-grammar G)
 	G
 )
-
 
 ; FIXME: This is a horrid hack and only supports sequential schedule sketches.
 (define (parse-schedule-sketch G S0)
@@ -51,10 +48,20 @@
 	(assert (ag:slot-v arg-slot))
 )
 
-(define classname "Node")
+; (define classname "Node")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fusion")
+; (define grammar-filename "./benchmarks/molly/molly5.grammar")
+
+; (define classname "Node")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fuse")
+; (define grammar-filename "./benchmarks/grafter/oopsla-example.grammar")
+
+(define classname "VirtualRoot")
 (define rootname (string->symbol classname))
 (define schedule-sketch "fusion")
-(define grammar-filename "./benchmarks/molly/molly3.grammar")
+(define grammar-filename "./benchmarks/molly/molly7.grammar")
 
 ; G: grammar
 (define G (parse-grammar grammar-filename))
@@ -105,7 +112,7 @@
 ;                   )
 ;                 )
 (define schedule (instantiate-sketch G S))
-(printf "> schedule is:\n~a\n" schedule)
+; (printf "> schedule is:\n~a\n" schedule)
 
 (for ([e (reverse E)])
 ; (for ([e (cdr (reverse E))])
@@ -123,13 +130,13 @@
 	;             )
 	;             () --> no children
 	;           )
-	(printf "> tree is:\n~a\n" (inspect-tree e))
+	; (printf "> tree is:\n~a\n" (inspect-tree e))
 	(define ae (tree-annotate e))
-	(printf "> annotated tree is:\n~a\n" ae)
+	; (printf "> annotated tree is:\n~a\n" ae)
 
 	; then start the interpretation
 	(interpret schedule ae)
-	(printf "> interpreted tree is:\n~a\n" ae)
+	; (printf "> interpreted tree is:\n~a\n" ae)
 
 	; validate is reading all attributes
 	(tree-validate ae validate-fn)
@@ -143,6 +150,7 @@
 	(begin
 		(printf "> SAT\n")
 		(printf (schedule->string schedule sdict sol))
+		(printf "\n")
 	)
 	(begin
 		(printf "> UNSAT\n")

@@ -1,0 +1,118 @@
+// second attempt to solve the oopsla example
+// run with:
+// ./run.rkt --root Root fuse benchmarks/tests/oopsla-example.grammar
+
+// desired solution:
+// 
+// case CRoot
+// recur root;
+// eval root.x; 
+// eval root.y;
+//
+// case CNode
+// iterate l { recur l; }
+// iterate r { recur r; }
+// eval self.constantXX;
+// eval self.isLeaf;
+// eval self.v;
+// iterate l { eval l.x; eval l.y; }
+// iterate r { eval r.x; eval r.y; }
+
+traversal fuse {
+    case CRoot {
+        recur root;
+        ??;
+    }
+    case CNode {
+        iterate l { recur l; }
+        iterate r { recur r; }
+        ??;
+        iterate l { ??; }
+        iterate r { ??; }
+    }
+}
+
+
+
+interface Root {
+}
+class CRoot : Root {
+    children {
+        root : Node;
+    }
+    rules {
+        root.x := 
+            if root.isLeaf then
+                root.constantNone
+            else
+                root.v;
+        root.y := root.v * 2;
+    }
+}
+
+interface Node {
+
+    // isLeaf property related
+    output id : bool;
+    output hasLeft : bool;
+    output hasRight : bool;
+    output isLeaf : bool;
+
+    // helper constants
+    output constantTrue : bool; // constant for true
+    output constantNone : int; // constant for null / value unspecified
+
+    // normal attributes
+    output v : int;
+    output x : int;
+    output y : int;
+
+}
+class CNode : Node {
+    children {
+        l : [Node];
+        r : [Node];
+    }
+    rules {
+        // assign constants to constant variables
+        self.constantTrue := true;
+        self.constantNone := -9999;
+
+        // isLeaf property computation
+        self.id := true;
+        self.isLeaf := self.hasLeft && self.hasRight;
+        self.hasLeft := [0]{ l.id : !self.constantTrue };
+        self.hasRight := [0]{ r.id : !self.constantTrue };
+        
+        // normal attributes computation
+        // -----------------------------
+
+        self.v :=
+            if self.isLeaf then
+                1
+            else
+                // will not trigger the default value
+                // since isLeaf is false
+                // but even if it's triggered
+                // the default value is also correct according to base case
+                [0]{ l.v : 1 } + [0]{ r.v : 1 };
+
+        l.y := l.v * 2;
+        l.x :=
+            if l.isLeaf then
+                // self.x + 2
+                // in this branch, self is not leaf for sure
+                // so self.x = self.v
+                // if using self.x + 2, it's not solvable
+                self.v + 2
+            else
+                l.v;
+
+        r.y := r.v * 2;
+        r.x :=
+            if r.isLeaf then
+                self.constantNone
+            else
+                r.v;
+    }
+}

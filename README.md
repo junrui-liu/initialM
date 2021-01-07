@@ -4,9 +4,23 @@
 
 ### Commands
 
-You need to manually switch the `require` body in `run.rkt` in order to switch from general-purpose encoding and trace encoding.
+```bash
+# molly3.grammar: accessing list children without dependencies
+racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly3.grammar
 
-`racket ./run.rkt --root HVBox fuse benchmarks/tests/my-toy.grammar`
+# molly4.grammar: accessing list children with dependencies
+racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly4.grammar
 
-`racket ./run.rkt --root Tree layout benchmarks/css/toy.grammar`
+# molly5.grammar: parent depends on children
+racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly5.grammar
+
+# molly6.grammar: chain dependency
+racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmarks/molly/molly6.grammar
+
+# molly7.grammar: many attributes (takes longer than others to solve)
+racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmarks/molly/molly7.grammar
+
+# grafter/oopsla-example: this takes forever to solve
+racket ./run.rkt --interface Node --traversal fuse --grammar ./benchmarks/grafter/oopsla-example.grammar
+```
 

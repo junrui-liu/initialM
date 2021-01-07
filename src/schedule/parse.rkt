@@ -183,7 +183,8 @@
     ;  (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")]
     [(list 'multichoose nth vs ...)
       (define ccmds (evaluate (hash-ref sdict nth) sol))
-      (string-join (for/list ([c vs]) (command->string c sdict sol)) "\n")
+      ; (printf "> chosen: ~a\n" ccmds)
+      (string-join (for/list ([c ccmds]) (command->string c sdict sol)) "\n")
     ]
   )
 )

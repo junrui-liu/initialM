@@ -54,7 +54,7 @@
 (define classname "Node")
 (define rootname (string->symbol classname))
 (define schedule-sketch "fusion")
-(define grammar-filename "./benchmarks/molly/molly1.grammar")
+(define grammar-filename "./benchmarks/molly/molly2.grammar")
 
 ; G: grammar
 (define G (parse-grammar grammar-filename))

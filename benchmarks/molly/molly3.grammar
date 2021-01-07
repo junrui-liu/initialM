@@ -1,7 +1,9 @@
- // run with: racket ./run.rkt --root Node fusion benchmarks/molly/molly2.grammar
+ // run with: racket ./run.rkt --root Node fusion benchmarks/molly/molly3.grammar
 
 traversal fusion {
     case Inner {
+        recur lk;
+        recur rk;
         ??;
     }
     case Leaf {
@@ -21,7 +23,7 @@ class Inner : Node {
         rk : End;
     }
     rules {
-        self.puff := lk.puff + rk.puff;
+        self.puff := 1;
         lk.puff := 47;
         rk.puff := 233;
     }

@@ -180,17 +180,21 @@
 				; (fixme) initiate a for loop for all-combinations-all-permutations
 				(define acap (all-combinations-all-permutations vs))
 				(define alist* (select* nth acap))
+				; (define tmp* (select* nth acap))
+				; (define alist* (list-ref (reverse acap) 1))
+				; (printf "> alist* is: ~a\n" alist*)
 				(for/all ([alist alist*])
 					(for ([ev alist])
+						; (printf "> go: ~a\n" ev)
 						(define ev-attr (ag:eval-attribute ev))
 						(define ev-rule (ag:class-ref*/rule class ev-attr))
 						(define ev-ready (^tree-select/ready self ev-attr))
-						(assert (! (ag:slot-v ev-ready)))
+						(assert (! (ag:slot-v ev-ready)) "before:write-to")
 						(define ev-field (^tree-select/field self ev-attr))
 						(define ev-res (evaluate self (ag:rule-formula ev-rule)))
 						(ag:set-slot-v! ev-field ev-res)
 						(ag:set-slot-v! ev-ready #t)
-						(assert (ag:slot-v ev-ready))
+						(assert (ag:slot-v ev-ready) "after:write-to")
 					)
 				)
 			]
@@ -289,6 +293,7 @@
 )
 
 (define (evaluate self term #:iterator [iter #f] #:cursor [cur #f] #:accumulator [acc #f])
+	; (printf "> evaluate: ~a\n" term)
 	(define (recur term)
 		(cond
 			[(union? term)
@@ -304,7 +309,7 @@
 					[(ag:field attr)
 						; (printf "> evaluate/field: ~a\n" term)
 						(define ev-ready (^tree-select/ready self attr #:iterator iter #:cursor cur))
-						(assert (ag:slot-v ev-ready))
+						(assert (ag:slot-v ev-ready) "before:read-from/field")
 						(define ev-field (^tree-select/field self attr #:iterator iter #:cursor cur))
 						(ag:slot-v ev-field)
 					]
@@ -318,7 +323,7 @@
 							(recur default)
 							(begin
 								(define ev-ready (tree-ref/ready (first nodes) field))
-								(assert (ag:slot-v ev-ready))
+								(assert (ag:slot-v ev-ready) "before:read-from/index/first")
 								(define ev-field (tree-ref/field (first nodes) field))
 								(ag:slot-v ev-field)
 							)
@@ -331,7 +336,7 @@
 							(recur default)
 							(begin
 								(define ev-ready (tree-ref/ready (last nodes) field))
-								(assert (ag:slot-v ev-ready))
+								(assert (ag:slot-v ev-ready) "before:read-from/index/last")
 								(define ev-field (tree-ref/field (last nodes) field))
 								(ag:slot-v ev-field)
 							)

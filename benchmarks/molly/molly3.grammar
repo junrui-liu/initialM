@@ -2,8 +2,8 @@
 
 traversal fusion {
     case Inner {
-        recur lk;
-        recur rk;
+        iterate lk { ??; }
+        iterate rk { ??; }
         ??;
     }
     case Leaf {
@@ -19,11 +19,11 @@ interface End {
 
 class Inner : Node {
     children {
-        lk : End;
-        rk : End;
+        lk : [End];
+        rk : [End];
     }
     rules {
-        self.puff := 1;
+        self.puff := 997;
         lk.puff := 47;
         rk.puff := 233;
     }

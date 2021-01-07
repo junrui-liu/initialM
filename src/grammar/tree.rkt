@@ -25,16 +25,27 @@
 )
 
 (struct tree (class fields readys children) #:mutable #:transparent)
+; (fixme) only works with one child
 (define (inspect-tree arg-tree)
-	(format "~a"
+	(format "#~a"
 		(append
 			(list
 				(ag:class-name (tree-class arg-tree))
 			)
-			(for/list ([c (tree-children arg-tree)]) 
-				(format "~a=~a"
-					(car c)
-					(inspect-tree (cdr c))
+			(for/list ([c (tree-children arg-tree)])
+				(if (list? c)
+					; a list of children for given symbol
+					(format ".~a=~a"
+						(car c)
+						(for/list ([z (cdr c)])
+							(inspect-tree z)
+						)
+					)
+					; single child for given symbol
+					(format ".~a=~a"
+						(car c)
+						(inspect-tree (cdr c))
+					)
 				)
 			)
 		)

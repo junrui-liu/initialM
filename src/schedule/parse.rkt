@@ -5,7 +5,8 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc
-         "../grammar/syntax.rkt")
+         "../grammar/syntax.rkt"
+         "../utility.rkt")
 
 (provide parse-schedule
          file->schedule
@@ -183,6 +184,7 @@
     ;  (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")]
     [(list 'multichoose nth vs ...)
       (define ccmds (evaluate (hash-ref sdict nth) sol))
+      (when (slist? ccmds) (set! ccmds (get-field v ccmds)))
       ; (printf "> chosen: ~a\n" ccmds)
       (string-join (for/list ([c ccmds]) (command->string c sdict sol)) "\n")
     ]

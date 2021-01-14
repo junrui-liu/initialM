@@ -16,6 +16,17 @@
 	(exit 0)
 )
 
+; (temporary) class to wrap a list
+(define slist
+	(class object%
+		(super-new)
+		(init-field
+			[v null]
+		)
+	)
+)
+(define (slist? o) (is-a? o slist))
+
 ; (lifted) associate list reference procedure
 ;        | only symbols can be keys of associate lists
 ;        | this is used in tree struct, e.g., (lk . #(struct:tree #<class> ...)) is a pair

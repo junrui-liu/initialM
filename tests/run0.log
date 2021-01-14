@@ -1,0 +1,25 @@
+jumaster:initialH joseph$ time racket ./run.rkt --interface Node --traversal fuse --grammar ./benchmarks/grafter/oopsla-example.grammar
+> generated 1 tree examples
+(check CNode id)
+(check CNode hasLeft)
+(check CNode hasRight)
+(check CNode isLeaf)
+(check CNode constantTrue)
+(check CNode constantNone)
+(check CNode v)
+(check CNode x)
+assert: failed
+  context...:
+   /Users/joseph/Library/Racket/7.7/pkgs/rosette/rosette/base/core/bool.rkt:299:0: raise-assertion-error
+   /Users/joseph/Desktop/UCSB/21winter/initialH/src/grammar/tree.rkt:253:8: for-loop
+   /Users/joseph/Desktop/UCSB/21winter/initialH/src/grammar/tree.rkt:252:0: tree-validate
+   "/Users/joseph/Desktop/UCSB/21winter/initialH/run.rkt": [running body]
+   temp35_0
+   for-loop
+   run-module-instance!
+   perform-require!
+
+real	67m57.993s
+user	65m27.414s
+sys	0m26.721s
+jumaster:initialH joseph$

@@ -178,13 +178,16 @@
 			]
 			[(list 'multichoose nth vs ...)
 				; (fixme) initiate a for loop for all-combinations-all-permutations
-				(define acap (all-combinations-all-permutations vs))
+				; (define acap (all-combinations-all-permutations vs))
+				(define acap (for/list ([u (all-combinations-all-permutations vs)]) (new slist [v u])))
 				(define alist* (select* nth acap))
 				; (define tmp* (select* nth acap))
 				; (define alist* (list-ref (reverse acap) 1))
 				; (printf "> alist* is: ~a\n" alist*)
 				(for/all ([alist alist*])
-					(for ([ev alist])
+					(define blist (get-field v alist))
+					(for ([ev blist])
+					; (for ([ev alist])
 						; (printf "> go: ~a\n" ev)
 						(define ev-attr (ag:eval-attribute ev))
 						(define ev-rule (ag:class-ref*/rule class ev-attr))

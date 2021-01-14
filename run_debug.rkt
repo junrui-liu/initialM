@@ -53,15 +53,20 @@
 ; (define schedule-sketch "fusion")
 ; (define grammar-filename "./benchmarks/molly/molly5.grammar")
 
-; (define classname "Node")
+(define classname "Root")
+(define rootname (string->symbol classname))
+(define schedule-sketch "fuse")
+(define grammar-filename "./benchmarks/grafter/oopsla-example.grammar")
+
+; (define classname "Root")
 ; (define rootname (string->symbol classname))
 ; (define schedule-sketch "fuse")
-; (define grammar-filename "./benchmarks/grafter/oopsla-example.grammar")
+; (define grammar-filename "./benchmarks/molly/molly8.grammar")
 
-(define classname "VirtualRoot")
-(define rootname (string->symbol classname))
-(define schedule-sketch "fusion")
-(define grammar-filename "./benchmarks/molly/molly7.grammar")
+; (define classname "VirtualRoot")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fusion")
+; (define grammar-filename "./benchmarks/molly/molly7.grammar")
 
 ; G: grammar
 (define G (parse-grammar grammar-filename))

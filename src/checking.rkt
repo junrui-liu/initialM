@@ -126,7 +126,7 @@
 )
 
 (define (denote-ite if then else)
-	((denotation-ops concrete-denotation) if then else)
+	((denotation-ite concrete-denotation) if then else)
 )
 
 ; returns an associated list:
@@ -190,6 +190,7 @@
 					; (for ([ev alist])
 						; (printf "> go: ~a\n" ev)
 						(define ev-attr (ag:eval-attribute ev))
+						; (printf "> on1 attr: ~a\n" ev-attr)
 						(define ev-rule (ag:class-ref*/rule class ev-attr))
 						(define ev-ready (^tree-select/ready self ev-attr))
 						(assert (! (ag:slot-v ev-ready)) "before:write-to")
@@ -225,6 +226,7 @@
 				(for/all ([alist alist*])
 					(for ([ev alist])
 						(define ev-attr (ag:eval-attribute ev))
+						; (printf "> on2 attr: ~a\n" ev-attr)
 						(define ev-rule (ag:class-ref*/rule class ev-attr))
 						(when (ag:rule-folds? ev-rule)
 							(ag:set-slot-v! (^ass-ref state0 ev-attr) (evaluate self (ag:rule-fold-init ev-rule)))
@@ -254,6 +256,7 @@
 						(for/all ([alist alist*])
 							(for ([ev alist])
 								(define ev-attr (ag:eval-attribute ev))
+								; (printf "> on3 attr: ~a\n" ev-attr)
 								(define ev-rule (ag:class-ref*/rule class ev-attr))
 								(define ev-eval
 									(curry evaluate self #:iterator child #:cursor node #:accumulator state-)
@@ -285,6 +288,7 @@
 
 	; (for ([(attr value) (^in-ass? state#)])
 	(for ([(attr value) state#])
+		; (printf "> on4 attr: ~a\n" attr)
 		(define ev-ready (^tree-select/ready self attr))
 		(assert (! (ag:slot-v ev-ready)) "before:write-to")
 		(define ev-field (^tree-select/field self attr))
@@ -346,7 +350,9 @@
 						)
 					]
 					[(ag:ite if then else)
+						; (printf "> ite starts\n")
 						(denote-ite (recur if) (recur then) (recur else))
+						; (printf "> ite ends\n")
 					]
 					[(ag:expr operator operands)
 						(define tmp0 (map recur operands))

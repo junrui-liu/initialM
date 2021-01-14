@@ -1,0 +1,80 @@
+ // run with: racket ./run.rkt --root Node fusion benchmarks/molly/molly6.grammar
+
+traversal fusion {
+    case Root {
+        ??;
+        recur lk;
+        ??;
+        recur rk;
+        ??;
+    }
+    case Inner {
+        ??;
+        recur lk;
+        ??;
+        recur rk;
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
+}
+
+interface VirtualRoot {
+    output total : int;
+    output ratio : float;
+}
+interface Node {
+    output total : int;
+    output ratio : float;
+}
+
+class Root : VirtualRoot {
+    children {
+        lk : Node;
+        rk : Node;
+    }
+    rules {
+        lk.ratio := lk.total / self.total;
+        rk.ratio := rk.total / self.total;
+        self.total := lk.total + rk.total;
+        self.ratio := 1.0;
+    }
+}
+class Inner : Node {
+    children {
+        lk : Node;
+        rk : Node;
+    }
+    rules {
+        lk.ratio := lk.total / self.total;
+        rk.ratio := rk.total / self.total;
+        self.total := lk.total + rk.total;
+    }
+}
+class Leaf : Node {
+    children {}
+    rules {
+        self.total := 1;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

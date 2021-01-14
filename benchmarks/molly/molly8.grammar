@@ -1,0 +1,53 @@
+traversal fuse {
+    case CRoot {
+        recur root;
+        ??;
+    }
+    case CNode {
+        iterate l { recur l; }
+        iterate r { recur r; }
+        ??;
+        iterate l { ??; }
+        iterate r { ??; }
+    }
+}
+
+
+
+interface Root {
+}
+class CRoot : Root {
+    children {
+        root : Node;
+    }
+    rules {
+    }
+}
+
+interface Node {
+
+    // helper constants
+    output constantTrue : bool; // constant for true
+    // normal attributes
+    output v : int;
+
+}
+class CNode : Node {
+    children {
+        l : [Node];
+        r : [Node];
+    }
+    rules {
+        // assign constants to constant variables
+        self.constantTrue := true;
+
+        // normal attributes computation
+        // -----------------------------
+
+        self.v :=
+            if self.constantTrue then
+                1
+            else
+                0;
+    }
+}

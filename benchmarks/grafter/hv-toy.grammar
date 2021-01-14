@@ -1,0 +1,57 @@
+// run with: racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/molly/hv-toy.grammar
+// this works but takes slightly long
+
+traversal fuse {
+    case HBox {
+        recur l;
+        recur r;
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
+}
+
+interface HVBox {
+    output w : int;
+    output h : int;
+}
+class HBox : HVBox {
+    children {
+        l : HVBox;
+        r : HVBox;
+    }
+    rules {
+        self.h := l.h + self.w;
+        self.w := l.w + r.w;
+    }
+}
+class Leaf : HVBox {
+    children {
+
+    }
+    rules {
+        self.w := 1.0;
+        self.h := 1.0;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
 // second attempt to solve the oopsla example
 // run with:
-// ./run.rkt --root Root fuse benchmarks/tests/oopsla-example.grammar
+// racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/grafter/oopsla-example.grammar
 
 // desired solution:
 // 

@@ -1,8 +1,15 @@
 ## initialH: Experimental Tree Traversal Synthesis
 
-(The tool is currently under inspection on Molly's forensic desktop.)
+(The `checking` branch: general-purpose encoding.)
 
-### Commands
+### Known Issues
+
+- Uninterpreted function parsing/interpretation is not yet supported.
+  - This affects (including): `hv-toy.grammar`,  `fmm.grammar`.
+- Attributes marked as `input` are currently not set.
+  - This affects (including): `piecewise`.
+
+### Testing Commands
 
 ```bash
 # molly3.grammar: accessing list children without dependencies
@@ -22,11 +29,26 @@ racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmar
 
 # molly8.grammar: MFE for oopsla-example (denote-ite bug)
 racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/molly/molly8.grammar
+```
+
+### Benchmark Commands
+
+```bash
+# hv-toy.grammar
+racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/grafter/hv-toy.grammar
 
 # grafter/oopsla-example.grammar: this takes forever to solve
 racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/grafter/oopsla-example.grammar
 
-# hv-toy.grammar
-racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/molly/hv-toy.grammar
+# binary-tree.grammar
+racket ./run.rkt --interface Root --traversal fuse --grammar benchmarks/grafter/binary-tree.grammar
+
+# fmm.grammar
+racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/fmm.grammar
+
+# piecewise series
+racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/piecewise-exp1.grammar
+racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/piecewise-exp2.grammar
+racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/piecewise-exp3.grammar
 ```
 

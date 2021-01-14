@@ -1,4 +1,5 @@
-// run with: racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/molly/hv-toy.grammar
+// run with: 
+// racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/molly/hv-toy.grammar
 // this works but takes slightly long
 
 traversal fuse {

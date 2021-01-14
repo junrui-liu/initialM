@@ -8,6 +8,8 @@
   - This affects (including): `hv-toy.grammar`,  `fmm.grammar`.
 - Attributes marked as `input` are currently not set.
   - This affects (including): `piecewise`.
+- Switch to matrix encoding of a hole to improve performance.
+  - This affects all complex benchmarks.
 
 ### Testing Commands
 

@@ -1,0 +1,59 @@
+traversal fusion {
+    case Inner {
+        ??;
+        recur lk;
+        recur rk;
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
+}
+
+interface Node {
+    output pie : int;
+    output puff : int;
+    output ping : int;
+    output park : int;
+}
+class Inner : Node {
+    children {
+        lk : Node;
+        rk : Node;
+    }
+    rules {
+        self.puff := default();
+        self.pie := if self.puff > 10 then self.ping else self.park;
+        self.ping := default();
+        self.park := default();
+    }
+}
+class Leaf : Node {
+    children {}
+    rules {
+        self.puff := default();
+        self.pie := default();
+        self.ping := default();
+        self.park := default();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

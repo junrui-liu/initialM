@@ -6,8 +6,8 @@
 
 - Uninterpreted function parsing/interpretation is not yet supported.
   - This affects (including): `hv-toy.grammar`,  `fmm.grammar`.
-- Attributes marked as `input` are currently not set.
-  - This affects (including): `piecewise`.
+- ~~Attributes marked as `input` are currently not set.~~
+  - ~~This affects (including): `piecewise`.~~
 - Switch to matrix encoding of a hole to improve performance.
   - This affects all complex benchmarks.
 
@@ -31,6 +31,15 @@ racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmar
 
 # molly8.grammar: MFE for oopsla-example (denote-ite bug)
 racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/molly/molly8.grammar
+
+# molly9.grammar: testing input keyword
+racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly9.grammar
+
+# molly10.grammar: testing uninterpreted function (faked with concrete values)
+racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly10.grammar
+
+# molly11.grammar: testing uninterpreted function (faked with new symbolic variables)
+racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly11.grammar
 ```
 
 ### Benchmark Commands

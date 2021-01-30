@@ -18,13 +18,13 @@ class Inner : Node {
         rk : Node;
     }
     rules {
-        self.puff := lk.puff + 1;
+        self.puff := default();
     }
 }
 class Leaf : Node {
     children {}
     rules {
-        self.puff := 49;
+        self.puff := default();
     }
 }
 

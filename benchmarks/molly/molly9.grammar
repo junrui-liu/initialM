@@ -10,6 +10,7 @@ traversal fusion {
 }
 
 interface Node {
+    input pie : int;
     output puff : int;
 }
 class Inner : Node {
@@ -18,13 +19,13 @@ class Inner : Node {
         rk : Node;
     }
     rules {
-        self.puff := lk.puff + 1;
+        self.puff := self.pie;
     }
 }
 class Leaf : Node {
     children {}
     rules {
-        self.puff := 49;
+        self.puff := self.pie;
     }
 }
 

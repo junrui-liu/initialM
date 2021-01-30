@@ -1,0 +1,31 @@
+#lang rosette
+(output-smt #t)
+(define-symbolic a boolean?)
+(define-symbolic b boolean?)
+(define-symbolic c boolean?)
+(define-symbolic v integer?)
+
+(define (test)
+	(assert
+		(||
+			(&& (equal? v 0) (! a) (! b) (! c))
+			(&& (equal? v 1) (! a) (! b) c)
+			(&& (equal? v 2) (! a) b (! c))
+			(&& (equal? v 3) (! a) b c)
+			(&& (equal? v 4) a (! b) (! c))
+			(&& (equal? v 5) a (! b) c)
+			(&& (equal? v 6) a b (! c))
+			(&& (equal? v 7) a b c)
+			(equal? v 55)
+		)
+	)
+	(solve (assert (equal? v 99)))
+)
+
+(for ([i (range 10000)])
+	(when (equal? 0 (modulo i 100))
+		(printf "# testing ~a\n" i)
+	)
+	(test)
+	(clear-asserts!)
+)

@@ -65,7 +65,15 @@
 		(for/list ([label (ag:class-labels* class)])
 			(cons 
 				(ag:label-name label) 
-				(ag:slot #f)
+				; (ag:slot #f)
+				(ag:slot
+					(if (ag:label/in? label)
+						; input modifier
+						(allocate-iv*)
+						; output modifier
+						#f
+					)
+				)
 			)
 		)
 	)

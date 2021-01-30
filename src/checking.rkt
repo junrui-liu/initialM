@@ -86,13 +86,17 @@
 	)
 )
 ; lifted
+(define (panacea . xs) 9999)
+; (define (panacea . xs) (define-symbolic* pan integer?) pan)
 (define (^match-fn arg-fn)
 	(cond
 		[(symbol? arg-fn)
 			(cond
 				[(equal? arg-fn 'max) max]
 				[(equal? arg-fn 'min) min]
-				[else (println-and-exit "# exception/^match-fn: unsupported operator ~a\n" arg-fn)]
+				; [else (println-and-exit "# exception/^match-fn: unsupported operator ~a\n" arg-fn)]
+				; FIXME: need to address the uninterpreted function
+				[else panacea]
 			)
 		]
 		[(union? arg-fn)

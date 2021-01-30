@@ -48,15 +48,15 @@
 	(assert (ag:slot-v arg-slot))
 )
 
-; (define classname "Node")
-; (define rootname (string->symbol classname))
-; (define schedule-sketch "fusion")
-; (define grammar-filename "./benchmarks/molly/molly5.grammar")
-
-(define classname "Root")
+(define classname "Node")
 (define rootname (string->symbol classname))
-(define schedule-sketch "fuse")
-(define grammar-filename "./benchmarks/grafter/oopsla-example.grammar")
+(define schedule-sketch "fusion")
+(define grammar-filename "./benchmarks/molly/molly10.grammar")
+
+; (define classname "Root")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fuse")
+; (define grammar-filename "./benchmarks/grafter/oopsla-example.grammar")
 
 ; (define classname "Root")
 ; (define rootname (string->symbol classname))

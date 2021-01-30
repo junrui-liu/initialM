@@ -1,6 +1,6 @@
 #!/usr/bin/env racket
 #lang rosette
-
+(output-smt #t)
 ; Script to run the synthesizer on a given attribute grammar.
 
 (require 

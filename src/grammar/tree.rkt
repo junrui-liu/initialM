@@ -222,7 +222,7 @@
       ; (if (set-member? queue class)
       ; (compose (curry append-map construct) ag:interface-classes)
       ; (compose (curry lookup variants) ag:interface-name))
-      (compose (curry lookup variants) ag:interface-name)
+      (compose (curry lookup variants) ag:interface-name))
     (set-remove! queue class)
     (define children
       (for/list ([child (ag:class-children* class)])

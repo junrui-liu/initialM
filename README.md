@@ -23,5 +23,8 @@ racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/fmm.grammar
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp1.grammar
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp2.grammar
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp3.grammar
+
+# ast
+racket ./run.rkt --root Program fuse benchmarks/grafter/ast-test4.grammar
 ```
 

@@ -164,7 +164,7 @@
 (if (sat? sol)
 	(begin
 		(printf "> SAT\n")
-		(printf (schedule->string schedule idict sol))
+		(printf (string-replace (schedule->string schedule idict sol) "\n\n" "\n"))
 		(printf "\n")
 	)
 	(begin

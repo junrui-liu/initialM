@@ -1,15 +1,19 @@
 ## initialH: Experimental Tree Traversal Synthesis
 
+### General-Purpose Encoding
+
 (The `checking` branch: general-purpose encoding.)
 
 ### Known Issues
 
-- Uninterpreted function parsing/interpretation is not yet supported.
-  - This affects (including): `hv-toy.grammar`,  `fmm.grammar`.
+- Enabling full examples makes `ast` very slow.
+
+- ~~Uninterpreted function parsing/interpretation is not yet supported.~~
+  - ~~This affects (including): `hv-toy.grammar`,  `fmm.grammar`.~~
 - ~~Attributes marked as `input` are currently not set.~~
   - ~~This affects (including): `piecewise`.~~
-- Switch to matrix encoding of a hole to improve performance.
-  - This affects all complex benchmarks.
+- ~~Switch to matrix encoding of a hole to improve performance.~~
+  - ~~This affects all complex benchmarks.~~
 
 ### Testing Commands
 
@@ -26,7 +30,7 @@ racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/moll
 # molly6.grammar: chain dependency
 racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmarks/molly/molly6.grammar
 
-# molly7.grammar: many attributes (takes longer than others to solve)
+# molly7.grammar: slightly more attributes
 racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmarks/molly/molly7.grammar
 
 # molly8.grammar: MFE for oopsla-example (denote-ite bug)
@@ -40,6 +44,9 @@ racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/moll
 
 # molly11.grammar: testing uninterpreted function (faked with new symbolic variables)
 racket ./run.rkt --interface Node --traversal fusion --grammar ./benchmarks/molly/molly11.grammar
+
+# molly12.grammar: many many attributes
+racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmarks/molly/molly12.grammar
 ```
 
 ### Benchmark Commands
@@ -54,12 +61,18 @@ racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/grafte
 # binary-tree.grammar
 racket ./run.rkt --interface Root --traversal fuse --grammar benchmarks/grafter/binary-tree.grammar
 
-# fmm.grammar (this needs to toggle better examples)
+# fmm.grammar (this needs full examples)
 racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/fmm.grammar
 
 # piecewise series
 racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/piecewise-exp1.grammar
 racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/piecewise-exp2.grammar
 racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/piecewise-exp3.grammar
+
+# render (this needs full examples)
+racket ./run.rkt --interface Document --traversal fuse --grammar benchmarks/grafter/render.grammar
+
+# ast (this needs full examples, which takes a long time)
+racket ./run.rkt --interface Program --traversal fuse --grammar benchmarks/grafter/ast.grammar
 ```
 

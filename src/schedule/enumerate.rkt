@@ -12,7 +12,7 @@
 
 (define mc-counter 0)
 (define (multichoose . xs)
-  (printf ">> multichoose from ~a\n" xs)
+  ; (printf ">> multichoose(~a) from ~a\n" mc-counter xs)
   (define m
     (apply 
       (curry list 'multichoose mc-counter) 
@@ -23,6 +23,7 @@
     )
   )
   (set! mc-counter (+ 1 mc-counter))
+  ; (printf ">> done multichoose\n")
   m
 )
 

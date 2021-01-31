@@ -1,0 +1,129 @@
+traversal fusion {
+    case Root {
+        recur lk;
+        recur rk;
+        ??;
+    }
+    case Inner {
+        recur lk;
+        recur rk;
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
+}
+
+interface VirtualRoot {
+    output total : int;
+    output ratio : float;
+    output x : int;
+    output y : int;
+    output a0 : int;
+    output a1 : int;
+    output a2 : int;
+    output a3 : int;
+    output a4 : int;
+    output a5 : int;
+    output a6 : int;
+    output a7 : int;
+    output a8 : int;
+}
+interface Node {
+    output total : int;
+    output ratio : float;
+    output x : int;
+    output y : int;
+    output a0 : int;
+    output a1 : int;
+    output a2 : int;
+    output a3 : int;
+    output a4 : int;
+    output a5 : int;
+    output a6 : int;
+    output a7 : int;
+    output a8 : int;
+}
+
+class Root : VirtualRoot {
+    children {
+        lk : Node;
+        rk : Node;
+    }
+    rules {
+        lk.ratio := lk.total / self.total;
+        rk.ratio := rk.total / self.total;
+        self.total := lk.total + rk.total;
+        self.ratio := 1.0;
+        self.x := 1.0;
+        self.y := 1.0;
+        self.a0 := 1.0;
+        self.a1 := 1.0;
+        self.a2 := 1.0;
+        self.a3 := 1.0;
+        self.a4 := 1.0;
+        self.a5 := 1.0;
+        self.a6 := 1.0;
+        self.a7 := 1.0;
+        self.a8 := 1.0;
+    }
+}
+class Inner : Node {
+    children {
+        lk : Node;
+        rk : Node;
+    }
+    rules {
+        lk.ratio := lk.total / self.total;
+        rk.ratio := rk.total / self.total;
+        self.total := lk.total + rk.total;
+        self.x := 1.0;
+        self.y := 1.0;
+        self.a0 := 1.0;
+        self.a1 := 1.0;
+        self.a2 := 1.0;
+        self.a3 := 1.0;
+        self.a4 := 1.0;
+        self.a5 := 1.0;
+        self.a6 := 1.0;
+        self.a7 := 1.0;
+        self.a8 := 1.0;
+    }
+}
+class Leaf : Node {
+    children {}
+    rules {
+        self.total := 1;
+        self.x := 1.0;
+        self.y := 1.0;
+        self.a0 := 1.0;
+        self.a1 := 1.0;
+        self.a2 := 1.0;
+        self.a3 := 1.0;
+        self.a4 := 1.0;
+        self.a5 := 1.0;
+        self.a6 := 1.0;
+        self.a7 := 1.0;
+        self.a8 := 1.0;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

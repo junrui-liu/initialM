@@ -184,17 +184,24 @@
     ; [(list commands ...)
     ;  (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")]
     [(list 'multichoose nth vs ...)
-      (define ccmds (evaluate (hash-ref sdict nth) sol))
-      ; (when (slist? ccmds) (set! ccmds (get-field v ccmds)))
-      ; (printf "> chosen: ~a\n" ccmds)
-      (string-join 
-        (filter (lambda (x) x) ; remove #f from choosing nothing
-          (for/list ([c ccmds])
-            (command->string c sdict sol)
-          ) 
+      (if (hash-has-key? sdict nth)
+        (begin
+          (define ccmds (evaluate (hash-ref sdict nth) sol))
+          ; (when (slist? ccmds) (set! ccmds (get-field v ccmds)))
+          ; (printf "> chosen: ~a\n" ccmds)
+          (string-join 
+            (filter (lambda (x) x) ; remove #f from choosing nothing
+              (for/list ([c ccmds])
+                (command->string c sdict sol)
+              ) 
+            )
+            "\n"
+          )
         )
-        "\n"
+        ; can't find key: didn't traverse this hole, which means the solution can be wrong
+        ""
       )
+      
     ]
   )
 )

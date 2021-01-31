@@ -1,0 +1,453 @@
+// resolveFlexWidths
+// resolveRelativeWidths
+// setFont
+// computeHeights
+// setPositions
+// run with: ./run.rkt --root Document fuse benchmarks/tests/render-test5.grammar
+// ============================
+// ==== tentative solution ====
+// ============================
+// traversal fuse {
+//   case CDocument {
+//     iterate[left] first_page {
+//       recur first_page;
+//     }
+//   }
+//   case CPage {
+//     eval self.PosX1;
+//     eval self.PosY1;
+//     iterate[left] first_horiz {
+//       eval first_horiz.CurrY;
+//       eval first_horiz.CurrX;
+//       recur first_horiz;
+//     }
+//     eval self.FontStyle1.Size;
+//     eval self.Height1;
+//     iterate[left] next {
+//       recur next;
+//     }
+//     eval self.Width1;
+//     eval self.FontStyle1.Type;
+//     eval self.Width2;
+//     eval self.FontStyle1.Color;
+//   }
+//   case CHorizontalContainer {
+//     eval self.FontStyle1.Size;
+//     eval self.PosX1;
+//     iterate[left] first_element {
+//       eval first_element.CurrX;
+//       eval first_element.CurrY;
+//       recur first_element;
+//     }
+//     eval self.Height1;
+//     eval self.FontStyle1.Color;
+//     iterate[left] next {
+//       eval next.CurrY;
+//       eval next.CurrX;
+//       recur next;
+//     }
+//     eval self.Width1;
+//     eval self.FontStyle1.Type;
+//     eval self.MaxWidth;
+//     eval self.AggregatedHeight;
+//     eval self.PosY1;
+//     eval self.Width2;
+//   }
+//   case CNormalElement {
+//     eval self.PosX1;
+//     eval self.FontStyle1.Size;
+//     eval self.Width1;
+//     eval self.Width2;
+//     iterate[left] next {
+//       eval next.CurrY;
+//       eval next.CurrX;
+//       recur next;
+//     }
+//     eval self.FontStyle1.Color;
+//     eval self.FontStyle1.Type;
+//     eval self.Height1;
+//     eval self.PosY1;
+//     eval self.AccumulatedWidth;
+//     eval self.MaxHeight;
+//   }
+//   case CVerticalContainer {
+//     eval self.PosY1;
+//     eval self.FontStyle1.Size;
+//     eval self.FontStyle1.Color;
+//     iterate[left] first_horiz {
+//       eval first_horiz.CurrY;
+//       eval first_horiz.CurrX;
+//       recur first_horiz;
+//     }
+//     eval self.PosX1;
+//     eval self.Width1;
+//     eval self.Width2;
+//     iterate[left] next {
+//       eval next.CurrX;
+//       eval next.CurrY;
+//       recur next;
+//     }
+//     eval self.AccumulatedWidth;
+//     eval self.Height1;
+//     eval self.FontStyle1.Type;
+//     eval self.MaxHeight;
+//   }
+// }
+
+
+traversal fuse {
+    case CDocument {
+        ??;
+        iterate first_page { ??; recur first_page; ??; }
+        ??;
+    }
+    case CPage {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CHorizontalContainer {
+        ??;
+        iterate first_element { ??; recur first_element; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CNormalElement {
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CVerticalContainer {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface Document {
+}
+class CDocument : Document {
+    children {
+        first_page : [Page]; // 0 or 1
+    }
+    rules {
+    }
+}
+
+interface Page {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0.Size : int;
+    input FontStyle0.Color : int;
+    input FontStyle0.Type : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+    input ParentFontStyle.Size : int; // setFont
+    input ParentFontStyle.Color : int; // setFont
+    input ParentFontStyle.Type : int; // setFont
+
+    output Width1 : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+    output FontStyle1.Size : int; // setFont
+    output FontStyle1.Color : int; // setFont
+    output FontStyle1.Type : int; // setFont
+    output Height1 : int; // computeHeights
+    // output AggregatedHeight : int; // computeHeights
+    output PosX1 : int; // setPositions
+    output PosY1 : int; // setPositions
+}
+class CPage : Page {
+    children {
+        first_horiz : [HorizontalContainer]; // 0 or 1
+        next : [Page]; // 0 or 1
+    }
+    rules {
+        // resolveFlexWidths
+        self.Width1 := 
+            if isFLEX(self.Width0) then
+                [0]{ first_horiz.MaxWidth : default() }
+            else
+                self.Width0;
+        // resolveRelativeWidths
+        self.Width2 := self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+        // computeHeights: node-level attribute
+        self.Height1 := [0]{ first_horiz.AggregatedHeight : default() };
+        // setPositions
+        self.PosX1 := 0;
+        self.PosY1 := 0;
+        first_horiz.CurrX := self.PosX1;
+        first_horiz.CurrY := self.PosY1;
+    }
+}
+
+interface HorizontalContainer {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0.Size : int;
+    input FontStyle0.Color : int;
+    input FontStyle0.Type : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+    input ParentFontStyle.Size : int; // setFont
+    input ParentFontStyle.Color : int; // setFont
+    input ParentFontStyle.Type : int; // setFont
+
+    output MaxWidth : int; // resolveFlexWidths
+    output Width1 : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+    output FontStyle1.Size : int; // setFont
+    output FontStyle1.Color : int; // setFont
+    output FontStyle1.Type : int; // setFont
+    output Height1 : int; // computeHeights
+    output AggregatedHeight : int; // computeHeights
+    output CurrX : int; // setPositions
+    output CurrY : int; // setPositions
+    output PosX1 : int; // setPositions
+    output PosY1 : int; // setPositions
+}
+class CHorizontalContainer : HorizontalContainer {
+    children {
+        first_element : [Element]; // 0 or 1
+        next : [HorizontalContainer]; // 0 or 1
+    }
+    rules {
+        // resolveFlexWidths
+        self.MaxWidth := 
+            if self.Width1 > [0]{ next.MaxWidth : default() } then
+                self.Width1
+            else
+                [0]{ next.MaxWidth : default() };
+        // resolveFlexWidths
+        self.Width1 :=
+            if isFLEX(self.WMode0) then
+                [0]{ first_element.AccumulatedWidth : default() }
+            else
+                self.Width0;
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+        // computeHeights: node-level attribute
+        self.Height1 := [0]{ first_element.MaxHeight : default() };
+        // computeHeights: list-level attribute
+        self.AggregatedHeight := self.Height1 + [0]{ next.AggregatedHeight : default() };
+        // setPositions
+        next.CurrX := self.CurrX;
+        next.CurrY := self.CurrY + self.Height1;
+        first_element.CurrX := self.CurrX;
+        first_element.CurrY := self.CurrY;
+        self.PosX1 := self.CurrX;
+        self.PosY1 := self.CurrY;
+    }
+}
+
+interface Element {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0.Size : int;
+    input FontStyle0.Color : int;
+    input FontStyle0.Type : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+    input ParentFontStyle.Size : int; // setFont
+    input ParentFontStyle.Color : int; // setFont
+    input ParentFontStyle.Type : int; // setFont
+    input ElementType : int; // computeHeights
+
+    output Width1 : int; // resolveFlexWidths
+    output AccumulatedWidth : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+    output FontStyle1.Size : int; // setFont
+    output FontStyle1.Color : int; // setFont
+    output FontStyle1.Type : int; // setFont
+    output Height1 : int; // computeHeights
+    output MaxHeight : int; // computeHeights
+    output CurrX : int; // setPositions
+    output CurrY : int; // setPositions
+    output PosX1 : int; // setPositions
+    output PosY1 : int; // setPositions
+}
+class CNormalElement : Element {
+    children {
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        self.Width1 := self.Width0;
+        self.AccumulatedWidth := self.Width1 + [0]{ next.AccumulatedWidth : default() };
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+        // computeHeights: list-level attribute
+        self.MaxHeight :=
+            if self.Height1 >= [0]{ next.MaxHeight : default() } then
+                self.Height1
+            else
+                [0]{ next.MaxHeight : default() };
+        // computeHeights: node-level attribute
+        self.Height1 :=
+            if isTextBox(self.ElementType) then
+                computeHeights4TextBox( self.FontStyle1.Size, self.Width2 )
+            else if isList(self.ElementType) then
+                computeHeights4List( self.FontStyle1.Size, self.Width2 )
+            else if isImage(self.ElementType) then
+                computeHeights4Image( self.Width2 )
+            else
+                default();
+        // setPositions
+        next.CurrX := self.CurrX + self.Width2;
+        next.CurrY := self.CurrY;
+        self.PosX1 := self.CurrX;
+        self.PosY1 := self.CurrY;
+    }
+}
+class CVerticalContainer : Element {
+    children {
+        first_horiz : [HorizontalContainer]; // exclusive for CVerticalContainer
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        self.Width1 :=
+            if isFLEX(self.WMode0) then
+                [0]{ first_horiz.MaxWidth : default() }
+            else
+                self.Width0;
+        self.AccumulatedWidth := self.Width1 + [0]{ next.AccumulatedWidth : default() };
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+        // computeHeights: list-level attribute
+        self.MaxHeight :=
+            if self.Height1 >= [0]{ next.MaxHeight : default() } then
+                self.Height1
+            else
+                [0]{ next.MaxHeight : default() };
+        // computeHeights: node-level attribute
+        self.Height1 := [0]{ first_horiz.AggregatedHeight : default() };
+        // setPositions
+        first_horiz.CurrX := self.CurrX;
+        first_horiz.CurrY := self.CurrY;
+        next.CurrX := self.CurrX + self.Width2;
+        next.CurrY := self.CurrY;
+        self.PosX1 := self.CurrX;
+        self.PosY1 := self.CurrY;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

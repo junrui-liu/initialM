@@ -16,27 +16,6 @@
 	(exit 0)
 )
 
-; (temporary) class to wrap a list
-(define slist
-	(class object%
-		(super-new)
-		(init-field
-			[v null]
-		)
-	)
-)
-(define (slist? o) (is-a? o slist))
-
-; iv: input variable
-(define (allocate-iv*)
-	(define-symbolic* iv-int integer?)
-	(define-symbolic* iv-bool boolean?)
-	(define iv-list (list iv-int iv-bool))
-	(define-symbolic* iv-ptr integer?)
-	(define iv (list-ref iv-list iv-ptr))
-	iv
-)
-
 ; (lifted) associate list reference procedure
 ;        | only symbols can be keys of associate lists
 ;        | this is used in tree struct, e.g., (lk . #(struct:tree #<class> ...)) is a pair
@@ -50,7 +29,8 @@
 				[(list cur rest ...)
 					(if (equal? (car cur) arg-key) (cdr cur) (^ass-ref rest arg-key))
 				]
-				[(list) (println-and-exit "# exception/^ass-ref: key not found for ~a\n" arg-key)]
+				; [(list) (println-and-exit "# exception/^ass-ref: key not found for ~a\n" arg-key)]
+				[(list) (assert #f)]
 				[_ (println-and-exit "# exception/^ass-ref: input is not a list but ~a\n" arg-list)]
 			)
 		]

@@ -12,10 +12,14 @@
 
 (define mc-counter 0)
 (define (multichoose . xs)
+  (printf ">> multichoose from ~a\n" xs)
   (define m
     (apply 
       (curry list 'multichoose mc-counter) 
-      xs
+      ; (note) since using rosette's choose*,
+      ;        you need to provide options for not evaluating anything
+      ;        which is null
+      (cons null xs)
     )
   )
   (set! mc-counter (+ 1 mc-counter))

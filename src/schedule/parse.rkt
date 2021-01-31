@@ -162,6 +162,7 @@
 
 (define (command->string command sdict sol)
   (match command
+    [(list) #f] ; choose to evaluate nothing
     [(ag:iter/left child commands)
      (define content
        (parameterize ([indentation (+ (indentation) 1)])
@@ -184,9 +185,16 @@
     ;  (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")]
     [(list 'multichoose nth vs ...)
       (define ccmds (evaluate (hash-ref sdict nth) sol))
-      (when (slist? ccmds) (set! ccmds (get-field v ccmds)))
+      ; (when (slist? ccmds) (set! ccmds (get-field v ccmds)))
       ; (printf "> chosen: ~a\n" ccmds)
-      (string-join (for/list ([c ccmds]) (command->string c sdict sol)) "\n")
+      (string-join 
+        (filter (lambda (x) x) ; remove #f from choosing nothing
+          (for/list ([c ccmds])
+            (command->string c sdict sol)
+          ) 
+        )
+        "\n"
+      )
     ]
   )
 )

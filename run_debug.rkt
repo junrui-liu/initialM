@@ -48,10 +48,20 @@
 	(assert (ag:slot-v arg-slot))
 )
 
-(define classname "Node")
+(define classname "VirtualRoot")
 (define rootname (string->symbol classname))
-(define schedule-sketch "fusion")
-(define grammar-filename "./benchmarks/molly/molly10.grammar")
+(define schedule-sketch "fuse")
+(define grammar-filename "./benchmarks/grafter/fmm.grammar")
+
+; (define classname "HVBox")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fuse")
+; (define grammar-filename "./benchmarks/grafter/hv-toy.grammar")
+
+; (define classname "Node")
+; (define rootname (string->symbol classname))
+; (define schedule-sketch "fusion")
+; (define grammar-filename "./benchmarks/molly/molly10.grammar")
 
 ; (define classname "Root")
 ; (define rootname (string->symbol classname))
@@ -154,7 +164,7 @@
 (if (sat? sol)
 	(begin
 		(printf "> SAT\n")
-		(printf (schedule->string schedule sdict sol))
+		(printf (schedule->string schedule idict sol))
 		(printf "\n")
 	)
 	(begin

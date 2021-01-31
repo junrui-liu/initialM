@@ -54,7 +54,7 @@ racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/grafte
 # binary-tree.grammar
 racket ./run.rkt --interface Root --traversal fuse --grammar benchmarks/grafter/binary-tree.grammar
 
-# fmm.grammar
+# fmm.grammar (this needs to toggle better examples)
 racket ./run.rkt --interface VirtualRoot --traversal fuse --grammar benchmarks/grafter/fmm.grammar
 
 # piecewise series

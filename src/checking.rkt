@@ -7,14 +7,15 @@
 (require
 	rosette/solver/mip/cplex
 	rosette/solver/smt/z3
+	rosette/lib/synthax
+	rosette/lib/angelic
 	"./grammar/syntax.rkt"
 	"./grammar/tree.rkt"
 	"./utility.rkt"
 )
 (provide
 	interpret
-	sdict
-	evaluate-sdict
+	idict
 )
 
 ; Activate an ILP solver (IBM CPLEX if available, otherwise Z3 in ILP mode)
@@ -31,21 +32,20 @@
 ;         | traverse
 ;         | evaluate
 
-(define sdict (make-hash)) ; stores symbolic variables
-(define (select* nth clist)
-	(if (hash-has-key? sdict nth)
-		(hash-ref sdict nth)
-		(begin
-			(define-symbolic* s integer?)
-			(hash-set! sdict nth (list-ref clist s))
-			(hash-ref sdict nth)
-		)
-	)
-)
-(define (evaluate-sdict sol)
-	(make-hash
-		(for/list ([k (dict-keys sdict)])
-			(cons k (evaluate (hash-ref sdict k) sol))
+(define idict (make-hash)) ; stores indication matrix
+; indication matrix
+(define (get-imat nth clist)
+	; (printf ">> get-imat gets: ~a\n" clist)
+	(if (hash-has-key? idict nth)
+		(hash-ref idict nth)
+		(let ([n (length clist)])
+			(define m
+				(for/list ([row (range n)])
+					(apply choose* clist)
+				)
+			)
+			(hash-set! idict nth m)
+			(hash-ref idict nth)
 		)
 	)
 )
@@ -58,79 +58,80 @@
 
 (struct denotation (ops fns ite) #:transparent)
 ; lifted
-(define (^match-op arg-op)
-	(cond
-		[(symbol? arg-op)
-			(cond
-				[(equal? arg-op '+) +]
-				[(equal? arg-op '-) -]
-				[(equal? arg-op '*) *]
-				[(equal? arg-op '/) /]
-				[(equal? arg-op '<) <]
-				[(equal? arg-op '<=) <=]
-				[(equal? arg-op '==) =]
-				[(equal? arg-op '>=) >=]
-				[(equal? arg-op '>) >]
-				[(equal? arg-op '!) not]
-				[(equal? arg-op '&&) (λ (e1 e2) (and e1 e2))]
-				[(equal? arg-op '\|\|) (λ (e1 e2) (or e1 e2))]
-				[else (println-and-exit "# exception/^match-op: unsupported operator ~a\n" arg-op)]
-			)
-		]
-		[(union? arg-op)
-			(for/all ([pp arg-op])
-				(^match-op pp)
-			)
-		]
-		[else (println-and-exit "# exception/^match-op: unsupported key ~a\n" arg-op)]
-	)
-)
-; lifted
-(define (panacea . xs) 9999)
-; (define (panacea . xs) (define-symbolic* pan integer?) pan)
-(define (^match-fn arg-fn)
-	(cond
-		[(symbol? arg-fn)
-			(cond
-				[(equal? arg-fn 'max) max]
-				[(equal? arg-fn 'min) min]
-				; [else (println-and-exit "# exception/^match-fn: unsupported operator ~a\n" arg-fn)]
-				; FIXME: need to address the uninterpreted function
-				[else panacea]
-			)
-		]
-		[(union? arg-fn)
-			(for/all ([pp arg-fn])
-				(^match-fn pp)
-			)
-		]
-		[else (println-and-exit "# exception/^match-fn: unsupported key ~a\n" arg-fn)]
-	)
-)
-(define concrete-denotation
-	(denotation 
-		^match-op
-		^match-fn
-		(λ (e1 e2 e3) (if e1 e2 e3))
-	)
-)
+; (define (^match-op arg-op)
+; 	(cond
+; 		[(symbol? arg-op)
+; 			(cond
+; 				[(equal? arg-op '+) +]
+; 				[(equal? arg-op '-) -]
+; 				[(equal? arg-op '*) *]
+; 				[(equal? arg-op '/) /]
+; 				[(equal? arg-op '<) <]
+; 				[(equal? arg-op '<=) <=]
+; 				[(equal? arg-op '==) =]
+; 				[(equal? arg-op '>=) >=]
+; 				[(equal? arg-op '>) >]
+; 				[(equal? arg-op '!) not]
+; 				[(equal? arg-op '&&) (λ (e1 e2) (and e1 e2))]
+; 				[(equal? arg-op '\|\|) (λ (e1 e2) (or e1 e2))]
+; 				[else (println-and-exit "# exception/^match-op: unsupported operator ~a\n" arg-op)]
+; 			)
+; 		]
+; 		[(union? arg-op)
+; 			(for/all ([pp arg-op])
+; 				(^match-op pp)
+; 			)
+; 		]
+; 		[else (println-and-exit "# exception/^match-op: unsupported key ~a\n" arg-op)]
+; 	)
+; )
+
+; (define (^match-fn arg-fn)
+; 	(cond
+; 		[(symbol? arg-fn)
+; 			(cond
+; 				[(equal? arg-fn 'max) max]
+; 				[(equal? arg-fn 'min) min]
+; 				; [else (println-and-exit "# exception/^match-fn: unsupported operator ~a\n" arg-fn)]
+; 				; FIXME: need to address the uninterpreted function
+; 				[else panacea]
+; 			)
+; 		]
+; 		[(union? arg-fn)
+; 			(for/all ([pp arg-fn])
+; 				(^match-fn pp)
+; 			)
+; 		]
+; 		[else (println-and-exit "# exception/^match-fn: unsupported key ~a\n" arg-fn)]
+; 	)
+; )
+; (define concrete-denotation
+; 	(denotation 
+; 		^match-op
+; 		^match-fn
+; 		(λ (e1 e2 e3) (if e1 e2 e3))
+; 	)
+; )
 
 (define (denote-op op xs)
-	(apply 
-		((denotation-ops concrete-denotation) op) 
-		xs
-	)
+	(void)
+	; (apply 
+	; 	((denotation-ops concrete-denotation) op) 
+	; 	xs
+	; )
 )
 
 (define (denote-fn fn xs)
-	(apply 
-		((denotation-fns concrete-denotation) fn)
-		xs
-	)
+	(void)
+	; (apply 
+	; 	((denotation-fns concrete-denotation) fn)
+	; 	xs
+	; )
 )
 
 (define (denote-ite if then else)
-	((denotation-ite concrete-denotation) if then else)
+	; ((denotation-ite concrete-denotation) if then else)
+	(void)
 )
 
 ; returns an associated list:
@@ -138,16 +139,6 @@
 	(for/list ([attr (ag:class-counters (tree-class self))])
 		; (pending) is it box or slot?
 		(cons attr (ag:slot #f))
-	)
-)
-
-(define (all-combinations-all-permutations mcl)
-	(for/fold ([res (list )]) ([v (combinations mcl)])
-		; (if (null? v)
-		; 	res
-		; 	(append res (permutations v))
-		; )
-		(append res (permutations v))
 	)
 )
 
@@ -181,28 +172,24 @@
 				(void)
 			]
 			[(list 'multichoose nth vs ...)
-				; (fixme) initiate a for loop for all-combinations-all-permutations
-				; (define acap (all-combinations-all-permutations vs))
-				(define acap (for/list ([u (all-combinations-all-permutations vs)]) (new slist [v u])))
-				(define alist* (select* nth acap))
-				; (define tmp* (select* nth acap))
-				; (define alist* (list-ref (reverse acap) 1))
-				; (printf "> alist* is: ~a\n" alist*)
-				(for/all ([alist alist*])
-					(define blist (get-field v alist))
-					(for ([ev blist])
-					; (for ([ev alist])
-						; (printf "> go: ~a\n" ev)
-						(define ev-attr (ag:eval-attribute ev))
-						; (printf "> on1 attr: ~a\n" ev-attr)
-						(define ev-rule (ag:class-ref*/rule class ev-attr))
-						(define ev-ready (^tree-select/ready self ev-attr))
-						(assert (! (ag:slot-v ev-ready)) "before:write-to")
-						(define ev-field (^tree-select/field self ev-attr))
-						(define ev-res (evaluate self (ag:rule-formula ev-rule)))
-						(ag:set-slot-v! ev-field ev-res)
-						(ag:set-slot-v! ev-ready #t)
-						(assert (ag:slot-v ev-ready) "after:write-to")
+				; obtain a |vs| * |vs| matrix of boolean symbolic variables
+				(define imat (get-imat nth vs))
+				(for ([ev imat])
+					; for every row, which is every choose, which is one rule or null
+					(if (null? ev)
+						(void) ; do nothing
+						; else this is a rule
+						(begin
+							(define ev-attr (ag:eval-attribute ev))
+							(define ev-rule (ag:class-ref*/rule class ev-attr))
+							(define ev-ready (^tree-select/ready self ev-attr))
+							(assert (! (ag:slot-v ev-ready)) "before:write-to")
+							(define ev-field (^tree-select/field self ev-attr))
+							(define ev-res (evaluate self (ag:rule-formula ev-rule)))
+							(ag:set-slot-v! ev-field ev-res)
+							(ag:set-slot-v! ev-ready #t)
+							(assert (ag:slot-v ev-ready) "after:write-to")
+						)
 					)
 				)
 			]
@@ -224,16 +211,17 @@
 				(void)
 			]
 			[(list 'multichoose nth vs ...)
-				; (fixme) initiate a for loop for all-combinations-all-permutations
-				(define acap (all-combinations-all-permutations vs))
-				(define alist* (select* nth acap))
-				(for/all ([alist alist*])
-					(for ([ev alist])
-						(define ev-attr (ag:eval-attribute ev))
-						; (printf "> on2 attr: ~a\n" ev-attr)
-						(define ev-rule (ag:class-ref*/rule class ev-attr))
-						(when (ag:rule-folds? ev-rule)
-							(ag:set-slot-v! (^ass-ref state0 ev-attr) (evaluate self (ag:rule-fold-init ev-rule)))
+				(define imat (get-imat nth vs))
+				(for ([ev imat])
+					(if (null? ev)
+						(void) ; do nothing
+						; else this is a rule
+						(begin
+							(define ev-attr (ag:eval-attribute ev))
+							(define ev-rule (ag:class-ref*/rule class ev-attr))
+							(when (ag:rule-folds? ev-rule)
+								(ag:set-slot-v! (^ass-ref state0 ev-attr) (evaluate self (ag:rule-fold-init ev-rule)))
+							)
 						)
 					)
 				)
@@ -254,30 +242,31 @@
 						(void)
 					]
 					[(list 'multichoose nth vs ...)
-						; (fixme) initiate a for loop for all-combinations-all-permutations
-						(define acap (all-combinations-all-permutations vs))
-						(define alist* (select* nth acap))
-						(for/all ([alist alist*])
-							(for ([ev alist])
-								(define ev-attr (ag:eval-attribute ev))
-								; (printf "> on3 attr: ~a\n" ev-attr)
-								(define ev-rule (ag:class-ref*/rule class ev-attr))
-								(define ev-eval
-									(curry evaluate self #:iterator child #:cursor node #:accumulator state-)
-								)
-								(if (ag:rule-folds? ev-rule)
-									(begin
-										(define ev-res (ev-eval (ag:rule-fold-next ev-rule)))
-										(ag:set-slot-v! (^ass-ref state+ ev-attr))
+						(define imat (get-imat nth vs))
+						(for ([ev imat])
+							(if (null? ev)
+								(void) ; do nothing
+								; else this is a rule
+								(begin
+									(define ev-attr (ag:eval-attribute ev))
+									(define ev-rule (ag:class-ref*/rule class ev-attr))
+									(define ev-eval
+										(curry evaluate self #:iterator child #:cursor node #:accumulator state-)
 									)
-									(begin
-										(define ev-ready (^tree-select/ready self ev-attr #:iterator child #:cursor node))
-										(assert (! (ag:slot-v ev-ready)) "before:write-to")
-										(define ev-field (^tree-select/field self ev-attr #:iterator child #:cursor node))
-										(define ev-res (ev-eval (ag:rule-formula ev-rule)))
-										(ag:set-slot-v! ev-field ev-res)
-										(ag:set-slot-v! ev-ready #t)
-										(assert (ag:slot-v ev-ready) "after:write-to")
+									(if (ag:rule-folds? ev-rule)
+										(begin
+											(define ev-res (ev-eval (ag:rule-fold-next ev-rule)))
+											(ag:set-slot-v! (^ass-ref state+ ev-attr))
+										)
+										(begin
+											(define ev-ready (^tree-select/ready self ev-attr #:iterator child #:cursor node))
+											(assert (! (ag:slot-v ev-ready)) "before:write-to")
+											(define ev-field (^tree-select/field self ev-attr #:iterator child #:cursor node))
+											(define ev-res (ev-eval (ag:rule-formula ev-rule)))
+											(ag:set-slot-v! ev-field ev-res)
+											(ag:set-slot-v! ev-ready #t)
+											(assert (ag:slot-v ev-ready) "after:write-to")
+										)
 									)
 								)
 							)
@@ -304,7 +293,6 @@
 )
 
 (define (evaluate self term #:iterator [iter #f] #:cursor [cur #f] #:accumulator [acc #f])
-	; (printf "> evaluate: ~a\n" term)
 	(define (recur term)
 		(cond
 			[(union? term)
@@ -318,7 +306,6 @@
 						val
 					]
 					[(ag:field attr)
-						; (printf "> evaluate/field: ~a\n" term)
 						(define ev-ready (^tree-select/ready self attr #:iterator iter #:cursor cur))
 						(assert (ag:slot-v ev-ready) "before:read-from/field")
 						(define ev-field (^tree-select/field self attr #:iterator iter #:cursor cur))
@@ -328,7 +315,6 @@
 						(ag:slot-v (^ass-ref acc attr))
 					]
 					[(ag:index/first (cons child field) default)
-						; (printf "> evaluate/index/first: ~a\n" term)
 						(define nodes (tree-ref/child self child))
 						(if (null? nodes)
 							(recur default)
@@ -341,7 +327,6 @@
 						)
 					]
 					[(ag:index/last (cons child field) default)
-						; (printf "> evaluate/index/last: ~a\n" term)
 						(define nodes (tree-ref/child self child))
 						(if (null? nodes)
 							(recur default)
@@ -354,9 +339,9 @@
 						)
 					]
 					[(ag:ite if then else)
-						; (printf "> ite starts\n")
+						; (note) recur happens first, which means both branches should be ready
+						; (fixme) if the user introduces redundant branches, the synthesizer will fail
 						(denote-ite (recur if) (recur then) (recur else))
-						; (printf "> ite ends\n")
 					]
 					[(ag:expr operator operands)
 						(define tmp0 (map recur operands))

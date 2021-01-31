@@ -68,8 +68,8 @@
 				; (ag:slot #f)
 				(ag:slot
 					(if (ag:label/in? label)
-						; input modifier
-						(allocate-iv*)
+						; input modifier, don't care
+						(void)
 						; output modifier
 						#f
 					)
@@ -261,7 +261,8 @@
 	(for ([p (tree-readys tree)])
 		(define label (car p))
 		(define value (cdr p))
-		(displayln `(check ,(ag:class-name (tree-class tree)) ,label))
+		; (displayln `(check ,(ag:class-name (tree-class tree)) ,label))
+		; (printf "- which is: ~a\n" value)
 		(check value)
 	)
 	(for ([p (tree-children tree)])
@@ -336,8 +337,9 @@
 	(define queue (list->mutable-seteq (ag:grammar-classes G)))
 	(define (construct class)
 	(define generate
-		;;; (if (set-member? queue class)
-		;;; (compose (curry append-map construct) ag:interface-classes))
+		; (if (set-member? queue class)
+		; (compose (curry append-map construct) ag:interface-classes)
+		; (compose (curry lookup variants) ag:interface-name))
 		(compose (curry lookup variants) ag:interface-name)
 	)
 	(set-remove! queue class)

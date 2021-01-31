@@ -1,8 +1,8 @@
 ## initialH: Experimental Tree Traversal Synthesis
 
-(The `tracing`/`master` branch: domain-specific encoding.)
+### Domain-Specific Encoding
 
-> Warning: reported bug in `denote-ite` unresolved in this branch.
+(The `tracing`/`master` branch: domain-specific encoding.)
 
 ### Benchmark Commands
 
@@ -16,7 +16,7 @@ racket ./run.rkt --root Root fuse benchmarks/grafter/oopsla-example.grammar
 # binary-tree.grammar
 racket ./run.rkt --root Root fuse benchmarks/grafter/binary-tree.grammar
 
-# fmm.grammar (this needs to toggle better examples)
+# fmm.grammar (this needs full examples)
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/fmm.grammar
 
 # piecewise series
@@ -24,7 +24,10 @@ racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp1.gramm
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp2.grammar
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp3.grammar
 
-# ast
-racket ./run.rkt --root Program fuse benchmarks/grafter/ast-test4.grammar
+# render (this needs full examples)
+racket ./run.rkt --root Document fuse benchmarks/grafter/render.grammar
+
+# ast (this needs full examples)
+racket ./run.rkt --root Program fuse benchmarks/grafter/ast.grammar
 ```
 

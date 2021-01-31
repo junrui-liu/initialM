@@ -1,0 +1,294 @@
+// resolveFlexWidths
+// resolveRelativeWidths
+// setFont
+// run with: ./run.rkt --root Document fuse benchmarks/tests/render-test3.grammar
+// ============================
+// ==== tentative solution ====
+// ============================
+
+
+traversal fuse {
+    case CDocument {
+        ??;
+        iterate first_page { ??; recur first_page; ??; }
+        ??;
+    }
+    case CPage {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CHorizontalContainer {
+        ??;
+        iterate first_element { ??; recur first_element; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CNormalElement {
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CVerticalContainer {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface Document {
+}
+class CDocument : Document {
+    children {
+        first_page : [Page]; // 0 or 1
+    }
+    rules {
+    }
+}
+
+interface Page {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0.Size : int;
+    input FontStyle0.Color : int;
+    input FontStyle0.Type : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+    input ParentFontStyle.Size : int; // setFont
+    input ParentFontStyle.Color : int; // setFont
+    input ParentFontStyle.Type : int; // setFont
+
+    output Width1 : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+    output FontStyle1.Size : int; // setFont
+    output FontStyle1.Color : int; // setFont
+    output FontStyle1.Type : int; // setFont
+}
+class CPage : Page {
+    children {
+        first_horiz : [HorizontalContainer]; // 0 or 1
+        next : [Page]; // 0 or 1
+    }
+    rules {
+        // resolveFlexWidths
+        self.Width1 := 
+            if isFLEX(self.Width0) then
+                [0]{ first_horiz.MaxWidth : default() }
+            else
+                self.Width0;
+        // resolveRelativeWidths
+        self.Width2 := self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+    }
+}
+
+interface HorizontalContainer {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0.Size : int;
+    input FontStyle0.Color : int;
+    input FontStyle0.Type : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+    input ParentFontStyle.Size : int; // setFont
+    input ParentFontStyle.Color : int; // setFont
+    input ParentFontStyle.Type : int; // setFont
+
+    output MaxWidth : int; // resolveFlexWidths
+    output Width1 : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+    output FontStyle1.Size : int; // setFont
+    output FontStyle1.Color : int; // setFont
+    output FontStyle1.Type : int; // setFont
+}
+class CHorizontalContainer : HorizontalContainer {
+    children {
+        first_element : [Element]; // 0 or 1
+        next : [HorizontalContainer]; // 0 or 1
+    }
+    rules {
+        // resolveFlexWidths
+        self.MaxWidth := 
+            if self.Width1 > [0]{ next.MaxWidth : default() } then
+                self.Width1
+            else
+                [0]{ next.MaxWidth : default() };
+        // resolveFlexWidths
+        self.Width1 :=
+            if isFLEX(self.WMode0) then
+                [0]{ first_element.AccumulatedWidth : default() }
+            else
+                self.Width0;
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+    }
+}
+
+interface Element {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0.Size : int;
+    input FontStyle0.Color : int;
+    input FontStyle0.Type : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+    input ParentFontStyle.Size : int; // setFont
+    input ParentFontStyle.Color : int; // setFont
+    input ParentFontStyle.Type : int; // setFont
+
+    output Width1 : int; // resolveFlexWidths
+    output AccumulatedWidth : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+    output FontStyle1.Size : int; // setFont
+    output FontStyle1.Color : int; // setFont
+    output FontStyle1.Type : int; // setFont
+}
+class CNormalElement : Element {
+    children {
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        self.Width1 := self.Width0;
+        self.AccumulatedWidth := self.Width1 + [0]{ next.AccumulatedWidth : default() };
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+    }
+}
+class CVerticalContainer : Element {
+    children {
+        first_horiz : [HorizontalContainer]; // exclusive for CVerticalContainer
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        self.Width1 :=
+            if isFLEX(self.WMode0) then
+                [0]{ first_horiz.MaxWidth : default() }
+            else
+                self.Width0;
+        self.AccumulatedWidth := self.Width1 + [0]{ next.AccumulatedWidth : default() };
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+        // setFont
+        self.FontStyle1.Size :=
+            if self.FontStyle0.Size == 0 - 1 then
+                self.ParentFontStyle.Size
+            else
+                self.FontStyle0.Size;
+        self.FontStyle1.Color :=
+            if self.FontStyle0.Color == 0 - 1 then
+                self.ParentFontStyle.Color
+            else
+                self.FontStyle0.Color;
+        self.FontStyle1.Type :=
+            if self.FontStyle0.Type == 0 - 1 then
+                self.ParentFontStyle.Type
+            else
+                self.FontStyle0.Type;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,205 @@
+// resolveFlexWidths
+// resolveRelativeWidths
+// run with: ./run.rkt --root Document fuse benchmarks/tests/render-test2.grammar
+// ============================
+// ==== tentative solution ====
+// ============================
+
+
+traversal fuse {
+    case CDocument {
+        ??;
+        iterate first_page { ??; recur first_page; ??; }
+        ??;
+    }
+    case CPage {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CHorizontalContainer {
+        ??;
+        iterate first_element { ??; recur first_element; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CNormalElement {
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+    case CVerticalContainer {
+        ??;
+        iterate first_horiz { ??; recur first_horiz; ??; }
+        ??;
+        iterate next { ??; recur next; ??; }
+        ??;
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+
+interface Document {
+}
+class CDocument : Document {
+    children {
+        first_page : [Page]; // 0 or 1
+    }
+    rules {
+    }
+}
+
+interface Page {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0 : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+
+    output Width1 : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+}
+class CPage : Page {
+    children {
+        first_horiz : [HorizontalContainer]; // 0 or 1
+        next : [Page]; // 0 or 1
+    }
+    rules {
+        // resolveFlexWidths
+        self.Width1 := 
+            if isFLEX(self.Width0) then
+                [0]{ first_horiz.MaxWidth : default() }
+            else
+                self.Width0;
+        // resolveRelativeWidths
+        self.Width2 := self.Width1;
+    }
+}
+
+interface HorizontalContainer {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0 : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+
+    output MaxWidth : int; // resolveFlexWidths
+    output Width1 : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+}
+class CHorizontalContainer : HorizontalContainer {
+    children {
+        first_element : [Element]; // 0 or 1
+        next : [HorizontalContainer]; // 0 or 1
+    }
+    rules {
+        // resolveFlexWidths
+        self.MaxWidth := 
+            if self.Width1 > [0]{ next.MaxWidth : default() } then
+                self.Width1
+            else
+                [0]{ next.MaxWidth : default() };
+        // resolveFlexWidths
+        self.Width1 :=
+            if isFLEX(self.WMode0) then
+                [0]{ first_element.AccumulatedWidth : default() }
+            else
+                self.Width0;
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+    }
+}
+
+interface Element {
+    input PosX0 : int;
+    input PosY0 : int;
+    input Height0 : int;
+    input Width0 : int;
+    input BackgroundColor0 : int;
+    input WMode0 : int;
+    input FontStyle0 : int;
+    input RelWidth0 : int;
+
+    input PWidth : int; // resolveRelativeWidths
+
+    output Width1 : int; // resolveFlexWidths
+    output AccumulatedWidth : int; // resolveFlexWidths
+    output Width2 : int; // resolveRelativeWidths
+}
+class CNormalElement : Element {
+    children {
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        self.Width1 := self.Width0;
+        self.AccumulatedWidth := self.Width1 + [0]{ next.AccumulatedWidth : default() };
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+    }
+}
+class CVerticalContainer : Element {
+    children {
+        first_horiz : [HorizontalContainer]; // exclusive for CVerticalContainer
+        next : [Element]; // 0 or 1
+    }
+    rules {
+        self.Width1 :=
+            if isFLEX(self.WMode0) then
+                [0]{ first_horiz.MaxWidth : default() }
+            else
+                self.Width0;
+        self.AccumulatedWidth := self.Width1 + [0]{ next.AccumulatedWidth : default() };
+        // resolveRelativeWidths
+        self.Width2 := 
+            if isREL(self.WMode0) then
+                self.RelWidth0 * self.PWidth
+            else
+                self.Width1;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

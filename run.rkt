@@ -45,10 +45,11 @@
  (let* ([G (parse-grammar grammar-filename)]
         [E (tree-examples G (*root*))]
         [temp (printf "> generated ~a tree examples\n" (length E))]
+        [temp0 (printf "> first tree looks like: ~a\n" (car E))]
         [S (parse-schedule-sketch G schedule-sketch)]
         [S* (complete-sketch G S E)])
    (when S*
-     (displayln (schedule->string S*))
+     (displayln (string-replace (schedule->string S*) "\n\n" "\n"))
      (let ([P (generate-program G S*)]
            [file (open-output-file (*output*) #:mode 'text #:exists 'replace)])
        (parameterize ([current-output-port file])

@@ -16,7 +16,7 @@ racket ./run.rkt --root Root fuse benchmarks/grafter/oopsla-example.grammar
 # binary-tree.grammar
 racket ./run.rkt --root Root fuse benchmarks/grafter/binary-tree.grammar
 
-# fmm.grammar
+# fmm.grammar (this needs to toggle better examples)
 racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/fmm.grammar
 
 # piecewise series

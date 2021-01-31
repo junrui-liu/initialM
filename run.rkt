@@ -44,6 +44,7 @@
  #:args (schedule-sketch grammar-filename)
  (let* ([G (parse-grammar grammar-filename)]
         [E (tree-examples G (*root*))]
+        [temp (printf "> generated ~a tree examples\n" (length E))]
         [S (parse-schedule-sketch G schedule-sketch)]
         [S* (complete-sketch G S E)])
    (when S*

@@ -15,6 +15,7 @@
                      [ref box]
                      [deref unbox]
                      [set-ref! set-box!])
+         inspect-tree
          tree-ref/field
          tree-ref/child
          tree-select
@@ -39,6 +40,28 @@
 
 ; TODO: Maybe represent fields with a prefix tree.
 (struct tree (class fields children) #:transparent)
+(define (inspect-tree arg-tree)
+  (if (list? arg-tree)
+    ; then
+    (format "~a"
+      (for/list ([t arg-tree]) (inspect-tree))
+    )
+    ; else
+    (format "~a"
+      (append
+        (list
+          (ag:class-name (tree-class arg-tree))
+        )
+        (for/list ([c (tree-children arg-tree)]) 
+          (format "~a=~a"
+            (car c)
+            (inspect-tree (cdr c))
+          )
+        )
+      )
+    )
+  )
+)
 
 (define (make-node class children)
   (define fields
@@ -213,16 +236,47 @@
 
 ; Return a set of example tree skeletons that include every parent-child class
 ; pairing permitted by the grammar.
+; (define (tree-examples G root)
+;   (define variants (build-children G))
+;   (define queue (list->mutable-seteq (ag:grammar-classes G)))
+
+;   (define (construct class)
+;     (define generate
+;       ; (if (set-member? queue class)
+;       ; (compose (curry append-map construct) ag:interface-classes)
+;       ; (compose (curry lookup variants) ag:interface-name)))
+;       (compose (curry lookup variants) ag:interface-name))
+;     (set-remove! queue class)
+;     (define children
+;       (for/list ([child (ag:class-children* class)])
+;         (match child
+;           [(ag:child/one name interface)
+;            (map (curry cons name) (generate interface))]
+;           [(ag:child/seq name interface)
+;            (let ([subtrees (generate interface)])
+;              (list (cons name
+;                          (append (list) subtrees))))])))
+;     ;;; (pretty-display children)
+;     ;;; (assert #f)
+;     (map (curry tree class null) (apply cartesian-product children)))
+
+;   (append-map construct (ag:interface-classes (ag:grammar-ref/interface G root))))
+
+; quick hack version
 (define (tree-examples G root)
   (define variants (build-children G))
   (define queue (list->mutable-seteq (ag:grammar-classes G)))
 
-  (define (construct class)
+  (define (construct k class)
     (define generate
-      ; (if (set-member? queue class)
-      ; (compose (curry append-map construct) ag:interface-classes)
-      ; (compose (curry lookup variants) ag:interface-name)))
-      (compose (curry lookup variants) ag:interface-name))
+      (if (equal? k 0)
+        (compose (curry lookup variants) ag:interface-name)
+        (if (set-member? queue class)
+          (compose (curry append-map (curry construct (- k 1))) ag:interface-classes)
+          (compose (curry lookup variants) ag:interface-name)
+        )
+      )
+    )
     (set-remove! queue class)
     (define children
       (for/list ([child (ag:class-children* class)])
@@ -232,9 +286,9 @@
           [(ag:child/seq name interface)
            (let ([subtrees (generate interface)])
              (list (cons name
-                         (append (list) subtrees))))])))
-    ;;; (pretty-display children)
-    ;;; (assert #f)
+                         (append (list) subtrees)))
+           )])))
+
     (map (curry tree class null) (apply cartesian-product children)))
 
-  (append-map construct (ag:interface-classes (ag:grammar-ref/interface G root))))
+  (append-map (curry construct 2) (ag:interface-classes (ag:grammar-ref/interface G root))))

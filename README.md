@@ -7,6 +7,9 @@
 ### Benchmark Commands
 
 ```bash
+# memory-bug.grammar
+racket ./run.rkt --root Function fuse benchmarks/testing/memory-bug.grammar
+
 # hv-toy.grammar
 racket ./run.rkt --root HVBox fuse benchmarks/grafter/hv-toy.grammar
 
@@ -27,7 +30,7 @@ racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp3.gramm
 # render (this needs full examples)
 racket ./run.rkt --root Document fuse benchmarks/grafter/render.grammar
 
-# ast (this needs full examples)
+# ast (this needs full examples, which takes a long time)
 racket ./run.rkt --root Program fuse benchmarks/grafter/ast.grammar
 ```
 

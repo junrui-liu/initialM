@@ -46,6 +46,7 @@
         [E (tree-examples G (*root*))]
         [temp (printf "> generated ~a tree examples\n" (length E))]
         [temp0 (printf "> first tree looks like: ~a\n" (car E))]
+        ; [temp0 (printf "> inspect first tree: ~a\n" (inspect-tree (car E)))]
         [S (parse-schedule-sketch G schedule-sketch)]
         [S* (complete-sketch G S E)])
    (when S*

@@ -1,0 +1,272 @@
+// general data structure sanity test (simpler version)
+// desugarDecr
+// desugarInc
+
+// ==== The Rewriting Comments ==== //
+// 1. type0 is the original type;
+// 2. As traversal goes, one type can get updated into another type;
+// 3. A type "indicates" visibility of children/attributes, 
+//    e.g., DecrStmt doesn't have "condition";
+// 4. Visibility will not affect the over-approximation, but affect the post-synthesis behavior
+//    e.g., the tool still assumes that DecrStmt has "condition" during synthesis
+//          but may choose to delete the branch after synthesis is done.
+
+traversal fuse {
+    case CProgram {
+        iterate first_function { recur first_function; }
+    }
+
+    case CFunction {
+        iterate first_statement { recur first_statement; }
+        iterate next { recur next; }
+    }
+
+    case CStatement {
+        ??;
+        iterate id { ??; recur id; }
+        iterate assigned_expr { ??; recur assigned_expr; }
+        iterate condition { ??; recur condition; }
+        iterate first_then_part { recur first_then_part; }
+        iterate first_else_part { recur first_else_part; }
+        iterate next { recur next; }
+    }
+
+    case CExpression {
+        iterate lhs { ??; recur lhs; }
+        iterate rhs { ??; recur rhs; }
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+interface Program {
+    
+}
+class CProgram : Program {
+    children {
+        first_function : [Function]; // Function, 0/1
+    }
+    rules {}
+}
+
+// ============================== //
+// ========== Function ========== //
+// ============================== //
+interface Function {
+    
+}
+class CFunction : Function {
+    children {
+        next : [Function]; // Function, 0/1
+        first_statement : [Statement]; // Statement, 0/1
+    }
+    rules {}
+}
+
+// =============================== //
+// ========== Statement ========== //
+// =============================== //
+interface Statement {
+    input statement_type0 : int; // e.g., ASSIGNMENT, IF, NOP, INC, DECR
+    input node_type0 : int; // e.g., STMT, EXPR, FUNCTION, SEQ
+
+    // ==== only add properties needed by procedures ==== //
+    output statement_type1 : int; // desugarDecr
+    output node_type1 : int; // desugarDecr
+
+    output statement_type2 : int; // desugarInc
+    output node_type2 : int; // desugarInc
+}
+
+class CStatement : Statement {
+    children {
+        // (fixme)
+        // id : Expression; // all but NOP
+        // assigned_expr : Expression; // ASSIGNMENT only
+        // condition : Expression; // IF only
+        id : [Expression]; // all but NOP
+        assigned_expr : [Expression]; // ASSIGNMENT only
+        next : [Statement]; // 0/1
+        condition : [Expression]; // IF only
+        first_then_part : [Statement]; // IF only, 0/1
+        first_else_part : [Statement]; // IF only, 0/1
+    }
+    rules {
+        // ===========
+        // desugarDecr
+        // ===========
+            // self
+            self.statement_type1 :=  if isDECR(self.statement_type0) then ASSIGNMENT() else self.statement_type0; 
+            self.node_type1 :=  if isDECR(self.statement_type0) then STMT() else self.node_type0; 
+
+            // assigned_expr
+            assigned_expr.expression_type1 := if isDECR(self.statement_type0) then BINARY() else assigned_expr.expression_type0;
+            assigned_expr.node_type1 := if isDECR(self.statement_type0) then EXPR() else assigned_expr.node_type0;
+            assigned_expr.operator1 := if isDECR(self.statement_type0) then SUBTRACT() else assigned_expr.operator0;
+                // stuffing
+                assigned_expr.var_id1 := assigned_expr.var_id0;
+                assigned_expr.value1 := assigned_expr.value0;
+                assigned_expr.args1 := none();
+
+            // arguments for: assigned_expr
+            // arguments about:
+            //   assigned_expr.lhs.node_type1
+            //   assigned_expr.lhs.expression_type1
+            //   assigned_expr.lhs.var_id1
+            //   assigned_expr.rhs.node_type1
+            //   assigned_expr.rhs.expression_type1
+            //   assigned_expr.rhs.value1
+            assigned_expr.args1 := 
+                if isDECR(self.statement_type0) then 
+                    args1(
+                        EXPR(), VARREF(), id.var_id0,
+                        EXPR(), CONSTANT(), 1
+                    ) 
+                else 
+                    none();
+
+            // others
+            id.expression_type1 := id.expression_type0;
+            id.node_type1 := id.node_type0;
+            id.operator1 := id.operator0;
+            id.var_id1 := id.var_id0;
+            id.value1 := id.value0;
+            id.args1 := none();
+            condition.expression_type1 := condition.expression_type0;
+            condition.node_type1 := condition.node_type0;
+            condition.operator1 := condition.operator0;
+            condition.var_id1 := condition.var_id0;
+            condition.value1 := condition.value0;
+            condition.args1 := none();
+        // ===========
+
+        // ==========
+        // desugarInc
+        // ==========
+            // self
+            self.statement_type2 :=  if isINC(self.statement_type1) then ASSIGNMENT() else self.statement_type1; 
+            self.node_type2 :=  if isINC(self.statement_type1) then STMT() else self.node_type1; 
+
+            // assigned_expr
+            assigned_expr.expression_type2 := if isINC(self.statement_type1) then BINARY() else assigned_expr.expression_type1;
+            assigned_expr.node_type2 := if isINC(self.statement_type1) then EXPR() else assigned_expr.node_type1;
+            assigned_expr.operator2 := if isINC(self.statement_type1) then ADD() else assigned_expr.operator1;
+                // stuffing
+                assigned_expr.var_id2 := assigned_expr.var_id1;
+                assigned_expr.value2 := assigned_expr.value1;
+                assigned_expr.args2 := none();
+
+            // arguments for: assigned_expr
+            // arguments about:
+            //   assigned_expr.lhs.node_type2
+            //   assigned_expr.lhs.expression_type2
+            //   assigned_expr.lhs.var_id2
+            //   assigned_expr.rhs.node_type2
+            //   assigned_expr.rhs.expression_type2
+            //   assigned_expr.rhs.value2
+            assigned_expr.args2 := 
+                if isINC(self.statement_type1) then 
+                    args1(
+                        EXPR(), VARREF(), id.var_id1,
+                        EXPR(), CONSTANT(), 1
+                    ) 
+                else 
+                    none();
+
+            // others
+            id.expression_type2 := id.expression_type1;
+            id.node_type2 := id.node_type1;
+            id.operator2 := id.operator1;
+            id.var_id2 := id.var_id1;
+            id.value2 := id.value1;
+            id.args2 := none();
+            condition.expression_type2 := condition.expression_type1;
+            condition.node_type2 := condition.node_type1;
+            condition.operator2 := condition.operator1;
+            condition.var_id2 := condition.var_id1;
+            condition.value2 := condition.value1;
+            condition.args2 := none();
+        // ==========
+    }
+}
+
+// ================================ //
+// ========== Expression ========== //
+// ================================ //
+interface Expression {
+    input expression_type0 : int; // e.g., CONSTANT, BINARY, VARREF
+    input node_type0 : int; // e.g., STMT, EXPR, FUNCTION, SEQ
+    input operator0 : int; // BINARY only
+    input var_id0 : int; // VARREF only
+    input value0 : int; // CONSTANT only
+
+    // ==== only add properties needed by procedures ==== //
+    output expression_type1 : int; // desugarDecr
+    output node_type1 : int; // desugarDecr
+    output operator1 : int; // desugarDecr
+    output var_id1 : int; // desugarDecr
+    output value1 : int; // desugarDecr
+    output args1 : set;  // desugarDecr
+
+    output expression_type2 : int; // desugarInc
+    output node_type2 : int; // desugarInc
+    output operator2 : int; // desugarInc
+    output var_id2 : int; // desugarInc
+    output value2 : int; // desugarInc
+    output args2 : set;  // desugarInc
+}
+class CExpression : Expression {
+    children {
+        // (fixme)
+        // lhs : Expression; // BINARY only
+        // rhs : Expression; // BINARY only
+        lhs : [Expression]; // BINARY only
+        rhs : [Expression]; // BINARY only
+    }
+    rules {
+        // ===========
+        // desugarDecr
+        // ===========
+            // lhs
+            lhs.node_type1 := if is_none(self.args1) then lhs.node_type0 else get_lhs_node_type(self.args1);
+            lhs.expression_type1 := if is_none(self.args1) then lhs.expression_type0 else get_lhs_expression_type(self.args1);
+            lhs.var_id1 := if is_none(self.args1) then lhs.var_id0 else get_lhs_var_id(self.args1);
+                // stuffing
+                lhs.operator1 := lhs.operator0;
+                lhs.value1 := lhs.value0;
+                lhs.args1 := none();
+
+            // rhs
+            rhs.node_type1 := if is_none(self.args1) then rhs.node_type0 else get_rhs_node_type(self.args1);
+            rhs.expression_type1 := if is_none(self.args1) then rhs.expression_type0 else get_rhs_expression_type(self.args1);
+            rhs.value1 := if is_none(self.args1) then rhs.value0 else get_rhs_value(self.args1);
+                // stuffing
+                rhs.operator1 := rhs.operator0;
+                rhs.var_id1 := rhs.var_id0;
+                rhs.args1 := none();
+        // ===========
+
+        // ==========
+        // desugarInc
+        // ==========
+            // lhs
+            lhs.node_type2 := if is_none(self.args2) then lhs.node_type1 else get_lhs_node_type(self.args2);
+            lhs.expression_type2 := if is_none(self.args2) then lhs.expression_type1 else get_lhs_expression_type(self.args2);
+            lhs.var_id2 := if is_none(self.args2) then lhs.var_id1 else get_lhs_var_id(self.args2);
+                // stuffing
+                lhs.operator2 := lhs.operator1;
+                lhs.value2 := lhs.value1;
+                lhs.args2 := none();
+
+            // rhs
+            rhs.node_type2 := if is_none(self.args2) then rhs.node_type1 else get_rhs_node_type(self.args2);
+            rhs.expression_type2 := if is_none(self.args2) then rhs.expression_type1 else get_rhs_expression_type(self.args2);
+            rhs.value2 := if is_none(self.args2) then rhs.value1 else get_rhs_value(self.args2);
+                // stuffing
+                rhs.operator2 := rhs.operator1;
+                rhs.var_id2 := rhs.var_id1;
+                rhs.args2 := none();
+        // ==========
+    }
+}

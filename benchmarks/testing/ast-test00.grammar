@@ -1,0 +1,85 @@
+// general data structure sanity test (simpler version)
+// ==== The Rewriting Comments ==== //
+// 1. type0 is the original type;
+// 2. As traversal goes, one type can get updated into another type;
+// 3. A type "indicates" visibility of children/attributes, 
+//    e.g., DecrStmt doesn't have "condition";
+// 4. Visibility will not affect the over-approximation, but affect the post-synthesis behavior
+//    e.g., the tool still assumes that DecrStmt has "condition" during synthesis
+//          but may choose to delete the branch after synthesis is done.
+
+traversal fuse {
+    case CProgram {
+    }
+
+    case CFunction {
+    }
+
+    case CStatement {
+    }
+
+    case CExpression {
+    }
+}
+
+// ============================= //
+// ========== Program ========== //
+// ============================= //
+interface Program {
+    
+}
+class CProgram : Program {
+    children {
+        first_function : [Function]; // Function, 0/1
+    }
+    rules {}
+}
+
+// ============================== //
+// ========== Function ========== //
+// ============================== //
+interface Function {
+    
+}
+class CFunction : Function {
+    children {
+        next : [Function]; // Function, 0/1
+        first_statement : [Statement]; // Statement, 0/1
+    }
+    rules {}
+}
+
+// =============================== //
+// ========== Statement ========== //
+// =============================== //
+interface Statement {
+    input type0 : int; // original type: AssignStmt/IncrStmt/DecrStmt/IfStmt/NullStmt/[Deleted]
+    // ==== only add properties needed by procedures ==== //
+}
+
+class CStatement : Statement {
+    children {
+        id : Expression; // (all but NullStmt) VarRefExpr
+        assigned_expr : Expression; // (AssignStmt only) Expression
+        next : [Statement]; // (all) Statement, 0/1
+        condition : Expression; // (IfStmt only) Expression
+        first_then_part : [Statement]; // (IfStmt only) Statement, 0/1
+        first_else_part : [Statement]; // (IfStmt only) Statement, 0/1
+    }
+    rules {}
+}
+
+// ================================ //
+// ========== Expression ========== //
+// ================================ //
+interface Expression {
+    input type0 : int; // original type: ConstantExpr/BinaryExpr/VarRefExpr/[Deleted]
+    // ==== only add properties needed by procedures ==== //
+}
+class CExpression : Expression {
+    children {
+        lhs : Expression; // (BinaryExpr only) Expression
+        rhs : Expression; // (BinaryExpr only) Expression
+    }
+    rules {}
+}

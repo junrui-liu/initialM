@@ -1,6 +1,6 @@
 #!/usr/bin/env racket
 #lang rosette
-(output-smt #t)
+; (output-smt #t)
 ; Script to run the synthesizer on a given attribute grammar.
 
 (require 
@@ -91,7 +91,7 @@
 	;  | e.g., #(struct:tree #<class> () () ())
 	; (printf "> tree is:\n~a\n" (inspect-tree e))
 ; )
-; (printf "> last tree is:\n~a\n" (list-ref (reverse E) 0))
+(printf "> first tree is:\n~a\n" (list-ref E 0))
 
 ; S: #(struct:traverse fusion)
 ;  | this is just a invocation
@@ -146,6 +146,7 @@
 	;             () --> no children
 	;           )
 	; (printf "> tree is:\n~a\n" (inspect-tree e))
+
 	(define ae (tree-annotate e))
 	; (printf "> annotated tree is:\n~a\n" ae)
 

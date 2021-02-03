@@ -172,7 +172,7 @@
 				(void)
 			]
 			[(list 'multichoose nth vs ...)
-				(printf "<traverse> multichoose nth=~a\n" nth)
+				; (printf "<traverse> multichoose nth=~a\n" nth)
 				; obtain a |vs| * |vs| matrix of boolean symbolic variables
 				(define imat (get-imat nth vs))
 				(for ([ev imat])
@@ -212,7 +212,7 @@
 				(void)
 			]
 			[(list 'multichoose nth vs ...)
-				(printf "<iterate> multichoose nth=~a\n" nth)
+				; (printf "<iterate> multichoose nth=~a\n" nth)
 				(define imat (get-imat nth vs))
 				(for ([ev imat])
 					(if (null? ev)
@@ -244,7 +244,7 @@
 						(void)
 					]
 					[(list 'multichoose nth vs ...)
-						(printf "<state> multichoose nth=~a\n" nth)
+						; (printf "<state> multichoose nth=~a\n" nth)
 						(define imat (get-imat nth vs))
 						(for ([ev imat])
 							(if (null? ev)

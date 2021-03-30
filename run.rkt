@@ -167,6 +167,9 @@
 		(printf "> SAT\n")
 		(printf (string-replace (schedule->string schedule idict sol) "\n\n" "\n"))
 		(printf "\n")
+		(match-let-values ([(nodes variables) (formula-size)])
+			(printf "Constraint Size: ~a nodes and ~a variables\n" nodes variables)
+		)
 	)
 	(begin
 		(printf "> UNSAT\n")

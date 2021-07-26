@@ -1,0 +1,98 @@
+// run with:
+// racket ./run.rkt --root Root fuse benchmarks/multi-pass.grammar
+
+traversal fuse {
+    case CRoot {
+        ??;
+        recur root;
+        ??;
+        recur shadowroot;
+        ??;
+    }
+    case CNode {
+        ??;
+        iterate l { recur l; }
+        iterate r { recur r; }
+        ??;
+    }
+    case CShadowNode {
+        ??;
+        iterate l { ??; recur l; }
+        iterate r { ??; recur r; }
+        ??;
+    }
+}
+
+interface Root {
+}
+class CRoot : Root {
+    children {
+        root : Node;
+        shadowroot : ShadowNode;
+    }
+    rules {
+        // bridging the normal node and shadow node
+        shadowroot.rootwidth := root.width;
+    }
+}
+
+interface Node {
+
+    // isLeaf property related
+    output id : bool;
+    output hasLeft : bool;
+    output hasRight : bool;
+    output isLeaf : bool;
+
+    // helper constants
+    output constantTrue : bool; // constant for true
+
+    // normal attributes
+    output width : int;
+
+    // only valid for leaf node
+    input width0 : int;
+}
+class CNode : Node {
+    children {
+        l : [Node]; // 0 or 1
+        r : [Node]; // 0 or 1
+    }
+    rules {
+        // assign constants to constant variables
+        self.constantTrue := true;
+
+        // isLeaf property computation
+        self.id := true;
+        self.isLeaf := self.hasLeft && self.hasRight;
+        self.hasLeft := [0]{ l.id : !self.constantTrue };
+        self.hasRight := [0]{ r.id : !self.constantTrue };
+        
+        // normal attributes computation
+        // -----------------------------
+        self.width := 
+            if self.isLeaf then
+                self.width0
+            else
+                [0]{ l.width : 0 } + [0]{ r.width : 0 };
+
+    }
+}
+
+interface ShadowNode {
+    output width : int;
+    output rootwidth : int;
+    output ratio : float;
+}
+class CShadowNode : ShadowNode {
+    children {
+        l : [ShadowNode]; // 0 or 1
+        r : [ShadowNode]; // 0 or 1
+    }
+    rules {
+        l.rootwidth := self.rootwidth;
+        r.rootwidth := self.rootwidth;
+        self.width := connect_original_node();
+        self.ratio := self.width / self.rootwidth;
+    }
+}

@@ -7,6 +7,9 @@
 ### Benchmark Commands
 
 ```bash
+# hv-toy.grammar
+racket ./run.rkt --root Tree layout benchmarks/toy.grammar
+
 # memory-bug.grammar
 racket ./run.rkt --root Function fuse benchmarks/testing/memory-bug.grammar
 

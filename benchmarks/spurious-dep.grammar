@@ -1,0 +1,42 @@
+// run with:
+// racket ./run.rkt --root Root fuse benchmarks/spurious-dep.grammar
+// racket ./run.rkt --interface Root --traversal fuse --grammar ./benchmarks/spurious-dep.grammar
+
+traversal fuse {
+    case CRoot {
+        ??;
+        recur kid;
+        ??;
+    }
+    case CNode {
+        ??;
+    }
+}
+
+interface Root {
+    output v0 : int;
+}
+class CRoot : Root {
+    children {
+        kid : Node;
+    }
+    rules {
+        self.v0 := kid.v0;
+        kid.v1 := self.v0;
+    }
+}
+
+interface Node {
+    output v0 : int;
+    output v1 : int;
+    output v2 : int;
+    output constantTrue : int;
+}
+class CNode : Node {
+    rules {
+        self.constantTrue := true;
+        self.v0 := 1;
+        self.v2 := if !self.constantTrue then self.v1 else 9;
+        // self.v2 := 9;
+    }
+}

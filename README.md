@@ -52,6 +52,9 @@ racket ./run.rkt --interface VirtualRoot --traversal fusion --grammar ./benchmar
 ### Benchmark Commands
 
 ```bash
+# toy.grammar
+racket ./run.rkt --interface Tree --traversal layout --grammar benchmarks/toy.grammar
+
 # hv-toy.grammar
 racket ./run.rkt --interface HVBox --traversal fuse --grammar benchmarks/grafter/hv-toy.grammar
 

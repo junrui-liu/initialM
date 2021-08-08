@@ -1,0 +1,31 @@
+class CBox {
+public:
+	CBox* next;
+	CBox* firstContent;
+
+	int width;
+	int computedWidth;
+	int cumulativeWidth; // helper for computedWidth of parent
+
+	int height;
+	int computedHeight;
+	int cumulativeHeight; // helper for computedHeight of parent
+}
+
+void CBox::calcWidth() {
+
+	firstContent->calcWidth();
+	next->calcWidth();
+	computedWidth = max( width, firstContent->cumulativeWidth );
+	cumulativeWidth = max( computedWidth, next->cumulativeWidth );
+
+}
+
+void CBox::calcHeight() {
+	
+	firstContent->calcHeight();
+	next->calcHeight();
+	computedHeight = max( height, firstContent->cumulativeHeight );
+	cumulativeHeight = computedHeight + next->cumulativeHeight;
+
+}

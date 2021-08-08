@@ -7,7 +7,13 @@
 ### Benchmark Commands
 
 ```bash
-# hv-toy.grammar
+# render-toy-vector.grammar
+racket ./run.rkt --root Box layout benchmarks/grafter/render-toy-vector.grammar
+
+# render-toy-linked.grammar
+racket ./run.rkt --root Box layout benchmarks/grafter/render-toy-linked.grammar
+
+# toy.grammar for layout engine
 racket ./run.rkt --root Tree layout benchmarks/toy.grammar
 
 # memory-bug.grammar

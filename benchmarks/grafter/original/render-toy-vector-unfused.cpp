@@ -6,7 +6,7 @@ public:
 	int computedWidth;
 
 	int height;
-	int cmumulativeHeight;
+	int cumulativeHeight;
 	int computedHeight;
 }
 
@@ -15,15 +15,15 @@ void CBox::calcWidth() {
 	computedWidth = width;
 	for (auto c : contents) {
 		c->calcWidth();
-		computedWidth = max( width, c->computedWidth );
+		computedWidth = max( computedWidth, c->computedWidth );
 	}
 }
 
 void CBox::calcHeight() {
-	cmumulativeHeight = 0;
+	cumulativeHeight = 0;
 	for (auto c : contents) {
 		c->calcHeight();
-		cmumulativeHeight += c->computedHeight;
+		cumulativeHeight += c->computedHeight;
 	}
-	computedHeight = max( height, cmumulativeHeight );
+	computedHeight = max( height, cumulativeHeight );
 }

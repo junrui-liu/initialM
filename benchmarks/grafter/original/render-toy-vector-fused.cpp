@@ -16,7 +16,7 @@ void CBox::fusedCalc() {
 	cmumulativeHeight = 0;
 	for (auto c : contents) {
 		c->fusedCalc();
-		computedWidth = max( width, c->computedWidth );
+		computedWidth = max( computedWidth, c->computedWidth );
 		cmumulativeHeight += c->computedHeight;
 	}
 

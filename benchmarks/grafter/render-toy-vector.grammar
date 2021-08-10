@@ -1,29 +1,40 @@
 traversal layout {
-	case CBox {
-		iterate contents {
-			recur contents;
-			??;
-		}
-		??;
-	}
+    case Inner {
+        iterate contents {
+            recur contents;
+            ??;
+        }
+        ??;
+    }
+    case Leaf {
+        ??;
+    }
 }
 
 interface Box {
-	input width : px;
-	output computedWidth : px;
+    input width : px;
+    output computedWidth : px;
 
-	input height : px;
-	output cumulativeHeight : px; // helper for computedHeight of parent
-	output computedHeight : px;
+    input height : px;
+    output cumulativeHeight : px; // helper for computedHeight of parent
+    output computedHeight : px;
 }
 
-class CBox : Box {
-	children {
-		contents : [Box];
-	}
-	rules {
-		self.computedWidth := foldl self.width .. max( @{self.computedWidth}, contents.computedWidth );
-		self.cumulativeHeight := foldl 0.0 .. @{self.cumulativeHeight} + contents.computedHeight;
-		self.computedHeight := max( self.height, self.cumulativeHeight );
-	}
+class Inner : Box {
+    children {
+        contents : [Box]; // semantically this should not be empty, but it doesn't hurt
+    }
+    rules {
+        self.computedWidth := foldl self.width .. max( @{self.computedWidth}, contents.computedWidth );
+        self.cumulativeHeight := foldl 0.0 .. @{self.cumulativeHeight} + contents.computedHeight;
+        self.computedHeight := max( self.height, self.cumulativeHeight );
+    }
+}
+class Leaf : Box {
+    children {}
+    rules {
+        self.computedWidth := self.width;
+        self.cumulativeHeight := 0;
+        self.computedHeight := self.height;
+    }
 }

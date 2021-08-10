@@ -1,34 +1,52 @@
 traversal layout {
-	case CBox {
-		iterate firstContent {
-			recur firstContent;
-		}
-		iterate next {
-			recur next;
-		}
-		??;
-	}
+    case Inner {
+        iterate firstContent {
+            recur firstContent;
+        }
+        iterate next {
+            recur next;
+        }
+        ??;
+    }
+    case Leaf {
+        iterate next {
+            recur next;
+        }
+        ??;
+    }
 }
 
 interface Box {
-	input width : px;
-	output computedWidth : px;
-	output cumulativeWidth : px; // helper for computedWidth of parent
+    input width : px;
+    output computedWidth : px;
+    output cumulativeWidth : px; // helper for computedWidth of parent
 
-	input height : px;
-	output computedHeight : px;
-	output cumulativeHeight : px; // helper for computedHeight of parent
+    input height : px;
+    output computedHeight : px;
+    output cumulativeHeight : px; // helper for computedHeight of parent
 }
 
-class CBox : Box {
-	children {
-		next : [Box]; // 0 or 1, next sibling
-		firstContent : [Box]; // 0 or 1, first child
-	}
-	rules {
-		self.computedWidth := max( self.width, [0]{ firstContent.computedWidth : 0 } );
-		self.cumulativeWidth := max( self.computedWidth, [0]{ next.cumulativeWidth : 0 } );
-		self.computedHeight := max( self.height, [0]{ firstContent.cumulativeHeight : 0 } );
-		self.cumulativeHeight := self.computedHeight + [0]{ next.cumulativeHeight : 0 };
-	}
+class Inner : Box {
+    children {
+        next : [Box]; // 0 or 1, next sibling
+        firstContent : [Box]; // 0 or 1, first child, semantically this should not be empty, but it doesn't hurt
+    }
+    rules {
+        self.computedWidth := max( self.width, [0]{ firstContent.computedWidth : 0 } );
+        self.cumulativeWidth := max( self.computedWidth, [0]{ next.cumulativeWidth : 0 } );
+        self.computedHeight := max( self.height, [0]{ firstContent.cumulativeHeight : 0 } );
+        self.cumulativeHeight := self.computedHeight + [0]{ next.cumulativeHeight : 0 };
+    }
+}
+
+class Leaf : Box {
+    children {
+        next : [Box]; // 0 or 1, next sibling
+    }
+    rules {
+        self.computedWidth := self.width;
+        self.cumulativeWidth := max( self.computedWidth, [0]{ next.cumulativeWidth : 0 } );
+        self.computedHeight := self.height;
+        self.cumulativeHeight := self.computedHeight + [0]{ next.cumulativeHeight : 0 };
+    }
 }

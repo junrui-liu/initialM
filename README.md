@@ -41,5 +41,8 @@ racket ./run.rkt --root Document fuse benchmarks/grafter/render.grammar
 
 # ast (this needs full examples, which takes a long time)
 racket ./run.rkt --root Program fuse benchmarks/grafter/ast.grammar
+
+# ast-list (this needs full examples, which takes a long time)
+racket ./run.rkt --root Program fuse benchmarks/grafter/ast-list.grammar
 ```
 

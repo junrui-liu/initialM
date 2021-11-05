@@ -1,0 +1,229 @@
+{
+    "meta-binary-tree.grammar": {
+        "name": "fuse",
+        "root": "Root",
+        "cases": {
+            "CRoot": {
+                "major": [
+                    "recur root;"
+                ],
+                "minor": []
+            },
+            "CNode": {
+                "major": [
+                    "iterate l { ??; recur l; ??; }",
+                    "iterate r { ??; recur r; ??; }"
+                ],
+                "minor": [
+                    "iterate l { ??; }",
+                    "iterate r { ??; }"
+                ]
+            }
+        }
+    },
+    "meta-fmm.grammar": {
+        "name": "fuse",
+        "root": "VirtualRoot",
+        "cases": {
+            "CVirtualRoot": {
+                "major": [
+                    "recur root;"
+                ],
+                "minor": []
+            },
+            "CVertex": {
+                "major": [
+                    "recur data;",
+                    "iterate c1 { ??; recur c1; ??; }",
+                    "iterate c2 { ??; recur c2; ??; }",
+                    "iterate c3 { ??; recur c3; ??; }",
+                    "iterate c4 { ??; recur c4; ??; }"
+                ],
+                "minor": [
+                    "iterate c1 { ??; }",
+                    "iterate c2 { ??; }",
+                    "iterate c3 { ??; }",
+                    "iterate c4 { ??; }"
+                ]
+            },
+            "CData": {
+                "major": [
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate next { ??; }"
+                ]
+            }
+        }
+    },
+    "meta-piecewise-exp1.grammar": {
+        "name": "fuse",
+        "root": "VirtualRoot",
+        "cases": {
+            "CVirtualRoot": {
+                "major": [
+                    "recur root;"
+                ],
+                "minor": []
+            },
+            "CNode": {
+                "major": [
+                    "iterate left { ??; recur left; ??; }",
+                    "iterate right { ??; recur right; ??; }"
+                ],
+                "minor": [
+                    "iterate left { ??; }",
+                    "iterate right { ??; }"
+                ]
+            }
+        }
+    },
+    "meta-piecewise-exp2.grammar": {
+        "name": "fuse",
+        "root": "VirtualRoot",
+        "cases": {
+            "CVirtualRoot": {
+                "major": [
+                    "recur root;"
+                ],
+                "minor": []
+            },
+            "CNode": {
+                "major": [
+                    "iterate left { ??; recur left; ??; }",
+                    "iterate right { ??; recur right; ??; }"
+                ],
+                "minor": [
+                    "iterate left { ??; }",
+                    "iterate right { ??; }"
+                ]
+            }
+        }
+    },
+    "meta-piecewise-exp3.grammar": {
+        "name": "fuse",
+        "root": "VirtualRoot",
+        "cases": {
+            "CVirtualRoot": {
+                "major": [
+                    "recur root;"
+                ],
+                "minor": []
+            },
+            "CNode": {
+                "major": [
+                    "iterate left { ??; recur left; ??; }",
+                    "iterate right { ??; recur right; ??; }"
+                ],
+                "minor": [
+                    "iterate left { ??; }",
+                    "iterate right { ??; }"
+                ]
+            }
+        }
+    },
+    "meta-render.grammar": {
+        "name": "fuse",
+        "root": "Document",
+        "cases": {
+            "CDocument": {
+                "major": [
+                    "iterate first_page { ??; recur first_page; ??; }"
+                ],
+                "minor": [
+                    "iterate first_page { ??; }"
+                ]
+            },
+            "CPage": {
+                "major": [
+                    "iterate first_horiz { ??; recur first_horiz; ??; }",
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate first_horiz { ??; }",
+                    "iterate next { ??; }"
+                ]
+            },
+            "CHorizontalContainer": {
+                "major": [
+                    "iterate first_element { ??; recur first_element; ??; }",
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate first_element { ??; }",
+                    "iterate next { ??; }"
+                ]
+            },
+            "CNormalElement": {
+                "major": [
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate next { ??; }"
+                ]
+            },
+            "CVerticalContainer": {
+                "major": [
+                    "iterate first_horiz { ??; recur first_horiz; ??; }",
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate first_horiz { ??; }",
+                    "iterate next { ??; }"
+                ]
+            }
+        }
+    },
+    "meta-ast.grammar": {
+        "name": "fuse",
+        "root": "Program",
+        "cases": {
+            "CProgram": {
+                "major": [
+                    "iterate first_function { ??; recur first_function; ??; }"
+                ],
+                "minor": [
+                    "iterate first_function { ??; }"
+                ]
+            },
+            "CFunction": {
+                "major": [
+                    "iterate first_statement { ??; recur first_statement; ??; }",
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate first_statement { ??; }",
+                    "iterate next { ??; }"
+                ]
+            },
+            "CStatement": {
+                "major": [
+                    "iterate id { ??; recur id; ??; }",
+                    "iterate assigned_expr { ??; recur assigned_expr; ??; }",
+                    "iterate condition { ??; recur condition; ??; }",
+                    "iterate first_then_part { ??; recur first_then_part; ??; }",
+                    "iterate first_else_part { ??; recur first_else_part; ??; }",
+                    "iterate next { ??; recur next; ??; }"
+                ],
+                "minor": [
+                    "iterate id { ??; }",
+                    "iterate assigned_expr { ??; }",
+                    "iterate condition { ??; }",
+                    "iterate first_then_part { ??; }",
+                    "iterate first_else_part { ??; }",
+                    "iterate next { ??; }"
+                ]
+            },
+            "CExpression": {
+                "major": [
+                    "iterate lhs { ??; recur lhs; ??; }",
+                    "iterate rhs { ??; recur rhs; ??; }"
+                ],
+                "minor": [
+                    "iterate lhs { ??; }",
+                    "iterate rhs { ??; }"
+                ]
+            }
+        }
+    }
+}

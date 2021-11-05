@@ -1,3 +1,6 @@
+tmp/*
+.ipynb_checkpoints/
+
 # ignore back-up files
 *~
 **/.DS_Store

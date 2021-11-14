@@ -16,7 +16,7 @@
 
 ;(define verbose? (make-parameter #f))
 (define *root* (make-parameter 'Root))
-(define *output* (make-parameter "browser/src/layout.rs"))
+(define *output* (make-parameter #f))
 
 (define (parse-grammar filename)
   (let ([G (file->grammar filename)])
@@ -53,6 +53,8 @@
    (when S*
      (displayln (string-replace (schedule->string S*) "\n\n" "\n"))
      (let ([P (generate-program G S*)]
-           [file (open-output-file (*output*) #:mode 'text #:exists 'replace)])
+           [file (if (equal? (*output*) "-")
+           		(current-output-port)
+           		(open-output-file (*output*) #:mode 'text #:exists 'replace))])
        (parameterize ([current-output-port file])
          (print-program P))))))

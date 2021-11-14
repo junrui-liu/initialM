@@ -34,7 +34,7 @@
   (apply ((denotation-fns (*denotation*)) fn) xs))
 
 (define (denote-ite if then else)
-  ((denotation-ops (*denotation*)) if then else))
+  ((denotation-ite (*denotation*)) if then else))
 
 (define (accumulator self)
   (for/list ([attr (ag:class-counters (tree-class self))])

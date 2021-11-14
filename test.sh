@@ -1,5 +1,5 @@
 #!/bin/sh
 
-./run.rkt --root Tree layout benchmarks/css/toy.grammar
+./run.rkt --root Tree -o browser/src/layout.rs layout benchmarks/toy.grammar
 cd browser
-cargo build && cargo run -- --html examples/margin.html --css examples/margin.css
+cargo build && cargo run -- --html examples/test.html --css examples/test.css

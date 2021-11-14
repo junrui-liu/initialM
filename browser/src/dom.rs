@@ -1,132 +1,57 @@
 //! Basic DOM data structures.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap,HashSet};
 
-pub struct DocumentTree {
-    pub document_root: DocumentNode,
-}
+pub type AttrMap = HashMap<String, String>;
 
-/// A node of the document tree (a baby DOM tree).
-pub struct DocumentNode {
-    pub index: NodeIndex,
-    pub children: Vec<DocumentNode>,
+#[derive(Debug)]
+pub struct Node {
+    // data common to all nodes:
+    pub children: Vec<Node>,
+
+    // data specific to each node type:
     pub node_type: NodeType,
 }
 
-/// Preorder-assigned node indices.
-pub type NodeIndex = u32;
-
-#[derive(Clone, Debug)]
-pub struct AttributeMap(HashMap<String, String>);
-
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum NodeType {
     Element(ElementData),
     Text(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ElementData {
     pub tag: String,
-    pub attributes: AttributeMap,
+    pub attributes: AttrMap,
 }
 
-impl DocumentTree {
-    pub fn new(root_nodes: Vec<DocumentNode>) -> Self {
-        let mut document_root = if root_nodes.len() == 1 {
-            root_nodes.into_iter().next().unwrap()
-        } else {
-            DocumentNode::new_elem("html".to_string(), AttributeMap::default(), root_nodes)
-        };
-        document_root.number_preorder();
-        DocumentTree { document_root }
+// Constructor functions for convenience:
+
+pub fn text(data: String) -> Node {
+    Node { children: vec![], node_type: NodeType::Text(data) }
+}
+
+pub fn elem(name: String, attrs: AttrMap, children: Vec<Node>) -> Node {
+    Node {
+        children: children,
+        node_type: NodeType::Element(ElementData {
+            tag: name,
+            attributes: attrs,
+        })
     }
 }
 
-impl DocumentNode {
-    /// Construct a text node.
-    ///
-    /// Note that node indices are assigned only when a complete `DocumentTree`
-    /// is created from a root node.
-    pub fn new_text(data: String) -> Self {
-        DocumentNode {
-            index: 0,
-            children: vec![],
-            node_type: NodeType::Text(data),
-        }
-    }
-
-    /// Construct an element node, with children already constructed.
-    ///
-    /// Note that node indices are assigned only when a complete `DocumentTree`
-    /// is created from a root node.
-    pub fn new_elem(tag_name: String, attr_map: AttributeMap, children: Vec<Self>) -> Self {
-        DocumentNode {
-            index: 0,
-            children: children,
-            node_type: NodeType::Element(ElementData {
-                tag: tag_name,
-                attributes: attr_map,
-            }),
-        }
-    }
-
-    pub fn as_elem(&self) -> Option<&ElementData> {
-        match self.node_type {
-            NodeType::Element(ref elem) => Some(elem),
-            NodeType::Text(_) => None,
-        }
-    }
-
-    pub fn as_text(&self) -> Option<&str> {
-        match self.node_type {
-            NodeType::Element(_) => None,
-            NodeType::Text(ref s) => Some(s),
-        }
-    }
-
-    /// Number each node in the document tree such that assigned node indices
-    /// ascend with preorder traversal, also returning the maximal node index.
-    ///
-    /// Note that this method considers the first document node on which it's
-    /// invoked as the tree root, assigning it node index 0.
-    fn number_preorder(&mut self) -> NodeIndex {
-        let mut i = self.index;
-        for child in self.children.iter_mut() {
-            child.index = i + 1;
-            i = child.number_preorder();
-        }
-        i
-    }
-}
+// Element methods
 
 impl ElementData {
-    /// Lookup this document element's ID.
-    pub fn id(&self) -> Option<&str> {
-        self.attributes.lookup("id")
+    pub fn id(&self) -> Option<&String> {
+        self.attributes.get("id")
     }
 
-    /// Lookup this document element's class set.
     pub fn classes(&self) -> HashSet<&str> {
-        match self.attributes.lookup("class") {
-            Some(class_list) => class_list.split(' ').collect(),
-            None => HashSet::new(),
+        match self.attributes.get("class") {
+            Some(classlist) => classlist.split(' ').collect(),
+            None => HashSet::new()
         }
-    }
-}
-
-impl AttributeMap {
-    pub fn new(attr_map: HashMap<String, String>) -> Self {
-        AttributeMap(attr_map)
-    }
-
-    pub fn lookup(&self, attribute: &str) -> Option<&str> {
-        self.0.get(attribute).map(String::as_str)
-    }
-}
-
-impl Default for AttributeMap {
-    fn default() -> Self {
-        AttributeMap(HashMap::default())
     }
 }

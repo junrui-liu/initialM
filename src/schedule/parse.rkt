@@ -6,11 +6,13 @@
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc
          "../grammar/syntax.rkt"
-         "../utility.rkt")
+         "../utility.rkt"
+         "dirty.rkt")
 
 (provide parse-schedule
          file->schedule
-         schedule->string)
+         schedule->string
+         schedule->solved)
 
 ; ----------------
 ; Lexer Definition
@@ -152,9 +154,14 @@
        (define content
          (parameterize ([indentation (+ (indentation) 1)])
            (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")))
-       (format "~acase ~a {\n~a\n~a}"
+       (define a (ag:class-allocation class))
+       (define allocation-content
+        (parameterize ([indentation (+ (indentation) 1)])
+          (string-join (dirty:allocation->strings a sol) "\n")))
+       (format "~acase ~a {\n~a\n~a\n~a}"
                (indent)
                (ag:class-name class)
+               allocation-content
                content
                (indent)))]
   )
@@ -175,6 +182,16 @@
          (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")))
      (format "~aiterate[right] ~a {\n~a\n~a}"
              (indent) child content (indent))]
+    [(ag:when ii commands)
+      (define cond
+        (if (equal? 0 (length ii))
+          "true"
+          (string-join (map (curry format "d~a") ii) " || " )))
+      (define content
+       (parameterize ([indentation (+ (indentation) 1)])
+         (string-join (for/list ([c commands]) (command->string c sdict sol)) "\n")))
+     (format "~awhen ~a {\n~a\n~a}"
+             (indent) cond content (indent))]
     [(ag:recur child)
      (format "~arecur ~a;" (indent) child)]
     [(ag:eval (cons node label))
@@ -200,8 +217,54 @@
         )
         ; can't find key: didn't traverse this hole, which means the solution can be wrong
         ""
-      )
-      
+      ) 
     ]
   )
 )
+
+
+
+(define (schedule->solved sdict sol wcdict sched)
+  (match sched
+   [(ag:traversal order visitors)
+    (ag:traversal order (map (curry visitor->solved sdict sol wcdict) visitors))]))
+
+(define (visitor->solved sdict sol wcdict visitor)
+  (match visitor
+  [(ag:visitor class commands)
+   (ag:visitor class (append-map (curry command->solved class sdict sol wcdict) commands))]))
+
+(define (command->solved class sdict sol wcdict c)
+  (define allocation (ag:class-allocation class))
+  (define (recur commands) (append-map (curry command->solved class sdict sol wcdict) commands))
+  (match c
+    [(list) '()]
+    [(ag:iter/left child commands)
+      (list (ag:iter/left child (recur commands)))]
+    [(ag:iter/right child commands)
+      (list (ag:iter/right child (recur commands)))]
+    [(ag:when (list 'wcchoose nth bits) commands)
+      (define commands* (recur commands))
+      (define conds* (evaluate (hash-ref wcdict nth) sol))
+      (printf "~a\n" conds*)
+      (define deps (union* (for/list ([command* commands*])
+        (define ev-attr (ag:eval-attribute command*))
+        (define ev-rule (ag:class-ref*/rule class ev-attr))
+        (define ev-formula (ag:rule-formula ev-rule))
+        (define rhs (ag:term-rhs ev-formula))
+        rhs)))
+      (printf "deps: ~a\n" deps)
+      (list (ag:when (nonzeros conds*) commands*))]
+    [(list 'multichoose nth vs ...)
+      (if (hash-has-key? sdict nth)
+        (begin
+          (define commands* (filter (lambda (x) (ag:eval? x)) (evaluate (hash-ref sdict nth) sol)))
+          ; (for/list ([command* commands*])
+          ;   (define ev-attr (ag:eval-attribute command*))
+          ;   (define ev-rule (ag:class-ref*/rule class ev-attr))
+          ;   (define ev-formula (ag:rule-formula ev-rule))
+          ;   (printf "eval ~a with rhs ~a\n" command* (ag:term-rhs ev-formula)))
+          commands*)
+      #f)]
+    [_ (list c)]))
+  

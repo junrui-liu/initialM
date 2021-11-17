@@ -154,6 +154,12 @@
 
 (define (const* f) (thunk* (f)))
 
+(define (bit*)
+  (define-symbolic* b integer?) ;; either true or false 0/1 ILP
+  (assert (<= 0 b 1))
+  b)
+
+
 ; Compute the approximate size of a formula, where each unique occurrence of an
 ; AST node counts as 1. Returns two values: the number of unique AST nodes in the
 ; assertion store and the number of unique variables in the assertion store.
@@ -293,3 +299,20 @@
 		[(symbol id) (? symbol? id)]
 	)
 )
+
+
+(define (print-asserts)
+	(define aa (asserts))
+	(for ([a aa])
+		(printf "~a\n" a)))
+
+(define (print-assert)
+	(printf "~a\n" (list-ref (asserts) 0)))
+
+(define (indices pred v)
+	(for/list ([i (range (vector-length v))]
+		#:when (pred (vector-ref v i)))
+		i))
+
+(define (nonzeros v)
+	(indices (curry < 0) v))

@@ -1,6 +1,7 @@
 #lang rosette
 
 (require 
+  "dirty.rkt"
   "../grammar/syntax.rkt"
 )
 
@@ -8,6 +9,7 @@
   instantiate-sketch
   enumerate-sketches
   synthesize-schedules
+  wc-counter
 )
 
 (define mc-counter 0)
@@ -19,13 +21,16 @@
       ; (note) since using rosette's choose*,
       ;        you need to provide options for not evaluating anything
       ;        which is null
-      (cons null xs)
-    )
-  )
+      (cons null xs)))
   (set! mc-counter (+ 1 mc-counter))
   ; (printf ">> done multichoose\n")
-  m
-)
+  m)
+(define wc-counter 0)
+(define (wcchoose . xs)
+  (define m
+    (list 'wcchoose wc-counter xs))
+  (set! wc-counter (+ 1 wc-counter))
+  m)
 
 (define (enumerate-commands class #:order [order #f] #:iterator [iterator #f])
   (for/list ([rule (ag:class-rules* class)]
@@ -46,6 +51,12 @@
        (for/list ([slot slots])
          (instantiate-command-sketch class slot 'right child)))
      (ag:iter/right child steps)]
+    [(ag:when _ slots)
+      (define steps
+       (for/list ([slot slots])
+         (instantiate-command-sketch class slot order iterator)))
+      (define bits (dirty:allocation-bits (ag:class-allocation class)))
+     (ag:when (apply wcchoose (vector->list bits)) steps)]
     [(ag:hole)
      (let ([range (enumerate-commands class #:order order #:iterator iterator)])
        (apply multichoose range))]
@@ -55,10 +66,13 @@
 ; Instantiate a traversal sketch for an attribute grammar G, given an
 ; interpretation of (multi-)choice. Used to denote a traversal sketch as a
 ; symbolic traversal.
-(define (instantiate-traversal-sketch G traversal)
+(define (instantiate-traversal-sketch G traversal num-dirty)
   (define visitors
     (for/list ([visitor (ag:traversal-visitors traversal)])
       (define class (ag:visitor-class visitor))
+      (define labels (map ag:label-name (ag:class-labels* class)))
+      (printf "class ~a has attributes: ~a\n" (ag:class-name class) labels)
+      (ag:set-class-allocation! class (dirty:alloc num-dirty labels))
       (ag:visitor (ag:visitor-class visitor)
                   (map (curry instantiate-command-sketch class)
                        (ag:visitor-commands visitor)))))
@@ -68,7 +82,7 @@
 ; Instantiate a schedule sketch for an attribute grammar G, given an
 ; interpretation of (multi-)choice. Used to denote a schedule sketch as a
 ; symbolc schedule.
-(define (instantiate-sketch G sketch)
+(define (instantiate-sketch G sketch num-dirty)
   (match sketch
     ;;; [(ag:sequential left-sched right-sched)
     ;;;  (ag:sequential (instantiate-sketch G left-sched)
@@ -77,7 +91,7 @@
     ;;;  (ag:parallel (instantiate-sketch G left-sched)
     ;;;               (instantiate-sketch G right-sched))]
     [(ag:traverse order)
-     (instantiate-traversal-sketch G (ag:grammar-ref/traversal G order))]
+     (instantiate-traversal-sketch G (ag:grammar-ref/traversal G order) num-dirty)]
     ;;; [(ag:traversal order visitors)
     ;;;  (instantiate-traversal-sketch G sketch)]
      ))

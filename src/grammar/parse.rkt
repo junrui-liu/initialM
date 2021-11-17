@@ -19,7 +19,7 @@
 (define-empty-tokens e-tkns
   (RBRACE LBRACE LPAREN RPAREN LBRACKET RBRACKET
    COLON SEMICOLON COMMA DOT
-   TRAVERSAL CASE ITERATE REVERSE RECUR CALL EVAL SKIP HOLE
+   TRAVERSAL CASE ITERATE REVERSE RECUR CALL EVAL SKIP HOLE EHOLE
    INTERFACE CLASS TRAIT
    CHILDREN ATTRIBUTES STATEMENTS RULES
    INPUT OUTPUT
@@ -29,6 +29,7 @@
    LT LE EQ NE GE GT
    AND OR
    QUESTION
+   WHEN
    IF THEN ELSE
    TRUE FALSE
    SELF
@@ -95,6 +96,7 @@
    ["eval" (token-EVAL)]
    ["skip" (token-SKIP)]
    ["??" (token-HOLE)]
+   ["?" (token-EHOLE)]
    ["interface" (token-INTERFACE)]
    ["class" (token-CLASS)]
    ["trait" (token-TRAIT)]
@@ -122,6 +124,7 @@
    ["&&" (token-AND)]
    ["||" (token-OR)]
    ["?" (token-QUESTION)]
+   ["when" (token-WHEN)]
    ["if" (token-IF)]
    ["then" (token-THEN)]
    ["else" (token-ELSE)]
@@ -188,6 +191,7 @@
      (() null))
 
     (command
+     ((WHEN EHOLE LBRACE command-list RBRACE) (ag:when #f $4))
      ((ITERATE name LBRACE command-list RBRACE) (ag:iter/left $2 $4))
      ((REVERSE name LBRACE command-list RBRACE) (ag:iter/right $2 $4))
      ((RECUR name SEMICOLON) (ag:recur $2))
@@ -344,7 +348,7 @@
            (list->string visitor->string visitors))])
 
 (define/match (visitor->string visitor)
-  [((ag:visitor (ag:class class-name _ _ _ _) commands))
+  [((ag:visitor (ag:class class-name _ _ _ _ _) commands))
    (format "\n  case ~a {~a\n  }"
            class-name
            (list->string command->string commands))])
@@ -390,7 +394,7 @@
                (list->string label->string labels)))])
 
 (define/match (class->string class)
-  [((ag:class name interface traits body _))
+  [((ag:class name interface traits body _ _))
    (format "\n\nclass ~a~a : ~a ~a"
            name
            (if (null? traits)

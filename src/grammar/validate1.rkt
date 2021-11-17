@@ -1,13 +1,14 @@
 #lang rosette
 
 (require "../utility.rkt"
-         "syntax.rkt")
+         "syntax.rkt"
+         "parse.rkt")
 
 (provide validate-grammar)
 
 (define/match (contextualize item)
-  [((ag:interface name _ _)) (format "in interface '~a'" name)]
-  [((ag:class name _ _ _ _ _)) (format "in class '~a'" name)]
+  [((ag:interface name _ _ _)) (format "in interface '~a'" name)]
+  [((ag:class name _ _ _ _)) (format "in class '~a'" name)]
   [((ag:trait name _)) (format "in trait '~a'" name)]
   [((ag:traversal name _)) (format "in traversal '~a'" name)]
   [((ag:child/one name _)) (format "on scalar child '~a'" name)]
@@ -25,26 +26,57 @@
   (displayln message)
   (raise-user-error 'validate message))
 
+(define (validate-interface-child G interface nested field)
+  (parameterize ([context interface])
+    ; (printf "validate-interface-child: ~a in ~a\n" (nested->string nested) (ag:interface-name interface))
+    (match nested
+      [(cons node tl)
+        (define child (ag:interface-ref/child interface node))
+        (match child
+          [(ag:child _ interface1)
+          (match tl
+            [empty
+              (define child (ag:class-ref*/child node #:partial? #f))
+              (define label (ag:interface-ref/label (ag:child-interface child)))
+              (validate-label label)]
+            [_
+              (validate-interface-child G interface1 tl field)])]
+          [#f (reject "No such child '~a'" node)])]
+      [#f (reject "Empty nested node")])))
+
+(define (validate-nested G class nested field)
+  (match nested
+    [(cons c g) ; child . more nested node
+     (define child (ag:class-ref*/child class c)) ; by default, #:partial #f
+     (define interface (ag:child-interface child))
+    ;  (printf "validate-nested: ~a.~a in ~a\n" (nested->string g) field (ag:interface-name interface))
+     (validate-interface-child G interface g field)]))
+
+(define (validate-label label)
+    (match label
+      [(ag:label/in _ _)
+        (reject "Cannot define input field '~a'" label)]
+      [(ag:label/out _ _)
+        (void)]
+      [(ag:label/cond _ _)
+        (void)]
+      [#f
+        (reject "No such field '~a'" label)]))
+
 (define (validate-target G class attribute)
   (match attribute
     [(cons 'self field)
-     (match (ag:class-ref*/label class field #:partial? #t)
-       [(ag:label/in _ _)
-        (reject "Cannot define input field '~a' on self" field)]
-       [(ag:label/out _ _)
-        (void)]
-       [#f
-        (reject "No such field '~a' on self" field)])]
+      (parameterize ([context class])
+      (define label (ag:class-ref*/label class field #:partial? #f))
+      (validate-label label))]
     [(cons node field)
-     (define child (ag:class-ref*/child class node #:partial? #t))
+     (define child (ag:class-ref*/child class node #:partial? #f))
      (parameterize ([context child])
-       (match (ag:interface-ref/label (ag:child-interface child) field)
-         [(ag:label/in _ _)
-          (reject "Cannot define input field '~a'" field)]
-         [(ag:label/out _ _)
-          (void)]
-         [#f
-          (reject "No such field '~a'" field)]))]))
+      (define label (ag:interface-ref/label (ag:child-interface child) field))
+      (validate-label label))]
+    [(cons (cons 'nested nested) field)
+    ;  (printf "validate-target: ~a.~a\n" (nested->string nested) field)
+     (validate-nested G class nested field)]))
 
 (define (validate-term G class term [iterates #f])
   (define/match (recur term)
@@ -52,6 +84,9 @@
     [((ag:field (cons 'self field)))
      (unless (ag:class-ref*/label class field #:partial? #t)
        (reject "Undefined field '~a' on self" field))]
+    [((ag:field (cons (cons 'nested nested) field)))
+     (unless (validate-target G class (cons (cons 'nested nested) field))
+      (reject "No such nested field '~a' nested"))]
     [((ag:field (cons node field)))
      (define child (ag:class-ref*/child class node #:partial? #t))
      (unless child
@@ -80,17 +115,34 @@
          (reject "Cannot index first/last field '~a'" field)))]
     [((ag:expr _ operands)) (for-each recur operands)]
     [((ag:call _ arguments)) (for-each recur arguments)]
-    [((ag:ite if then else)) (for-each recur (list if then else))])
+    [((ag:ite if then else)) (for-each recur (list if then else))]
+    [((ag:skip-term cond term)) void]
+    [((ag:skip-seq terms)) void]
+    )
   (recur term))
+
+(define (validate-skip G class rule)
+  (define lhs (ag:rule-lhs rule))
+  (define rhs (ag:rule-rhs rule))
+  (define field (cdr lhs))
+  (printf "LHS field is ~a\n" field))
+  ; (unless (ag:label/cond? (class-ref*/label class field))
+  ;   (reject "Not a conditional field")
 
 ; Validate well-formedness of the rule statement.
 (define (validate-rule G class rule)
-  (validate-target G class (ag:rule-attribute rule))
-  (match (ag:rule-formula rule)
+  ; (printf "validate-rule (class ~a) ~a\n" (ag:class-name class) (rule->string rule))
+  (validate-target G class (ag:rule-lhs rule))
+  (match (ag:rule-rhs rule)
     [(ag:fold init next)
      (validate-term G class init)
      (validate-term G class next (ag:rule-iteration rule))]
+    [(ag:skip-term _ _)
+     (validate-skip G class rule)]
+    [(ag:skip-seq _)
+     (validate-skip G class rule)]
     [term
+      ; Junrui: why supply (ag:rule-iteration rule) when we know it has to be #f?
      (validate-term G class term (ag:rule-iteration rule))]))
 
 ; Validate well-formedness of the class.
@@ -105,7 +157,7 @@
   (when/let ([duplicate (check-duplicates (map ag:label-name (ag:class-labels* class)))])
     (reject "Duplicate field declarations for '~a'"))
 
-  (when/let ([duplicate (check-duplicates (map ag:rule-attribute (ag:class-rules* class)))])
+  (when/let ([duplicate (check-duplicates (map ag:rule-lhs (ag:class-rules* class)))])
     (reject "Duplicate rule definitions for '~a'" duplicate))
 
   (for ([rule (ag:class-rules* class)])

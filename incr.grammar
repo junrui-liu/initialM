@@ -1,0 +1,29 @@
+traversal render {
+  case Box {
+    when ? { ??; }
+    when ? { ??; }
+  }
+}
+
+interface Box {
+  input parentFontSize : int;
+  input parentFontColor : int;
+  input WMode : int;
+  input parentWidth : int;
+  input relativeRatio : int;
+  input absoluteWidth : int;
+
+  output fontSize : int;
+  output fontColor : int;
+  output widthRelative : int;
+  output width : int;
+}
+class Box : Box {
+  children {}
+  rules {
+    self.fontSize := self.parentFontSize;
+    self.fontColor := self.parentFontColor;
+    self.widthRelative := self.parentWidth * self.relativeRatio;
+    self.width := if isABS(self.WMode) then self.absoluteWidth else self.widthRelative;
+  }
+}

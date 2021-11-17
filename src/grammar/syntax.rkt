@@ -34,7 +34,7 @@
 (struct trait (name body) #:transparent)
 
 ; class definition
-(struct class (name [interface #:mutable] [traits #:mutable] body [counters #:mutable #:auto]) #:auto-value #f)
+(struct class (name [interface #:mutable] [traits #:mutable] body [counters #:mutable #:auto] [allocation #:mutable #:auto]) #:auto-value #f)
 
 ; class/trait body
 (struct body (children labels rules))
@@ -80,6 +80,7 @@
 (struct iter (child commands) #:transparent #:constructor-name make-iter)
 (struct iter/left iter () #:transparent)
 (struct iter/right iter () #:transparent)
+(struct when (cond commands) #:mutable #:transparent)
 (struct recur (child) #:transparent)
 (struct eval (attribute) #:transparent)
 (struct skip () #:transparent)
@@ -367,6 +368,15 @@
      (ormap (curry term-iterates class) arguments)]
     [(ite if then else)
      (ormap (curry term-iterates class) (list if then else))]))
+
+(define (term-rhs term)
+  (match term
+    [(const _) '()]
+    [(field (cons 'self a)) (list a)]
+    [(expr _ operands) (union (append-map term-rhs operands))]
+    [(call _ arguments) (union (append-map term-rhs arguments))]
+    [(ite if then else) (union (append-map term-rhs (list if then else)))]
+    [_ '()]))
 
 (define fold-rev? fold/right?)
 (define iter-rev? iter/right?)

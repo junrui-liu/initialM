@@ -45,7 +45,7 @@
 ; assert the current attribute is ready
 (define (validate-fn arg-slot)
 	; (printf "> validate-fn: ~a\n" arg-slot)
-	(assert (ag:slot-v arg-slot))
+	(assert (ag:slot-v arg-slot) "slot not ready")
 )
 
 ; (define classname "Node")
@@ -62,6 +62,7 @@
 (define rootname null)
 (define schedule-sketch null)
 (define grammar-filename null)
+(define num-dirty null)
 
 (command-line
 	#:program "initialH"
@@ -76,8 +77,11 @@
 		[("-g" "--grammar") p "path to grammar"
 			(set! grammar-filename p)
 		]
-)
+		[("-d" "--dirty") p "number of dirty bits"
+			(set! num-dirty (string->number p))])
 
+
+(printf "> number of dirty bits: ~a\n" num-dirty)
 ; G: grammar
 (define G (parse-grammar grammar-filename))
 ; (printf "> grammar is:\n~a\n" G)
@@ -100,51 +104,13 @@
 ; (printf "> S is:\n~a\n" S)
 
 ; schedule: (struct traversal (name visitors) #:transparent)
-;         | now it becomes a definition
-;         | e.g., #(struct:traversal 
-;                   fusion
-;                   (
-;                     #(struct:visitor 
-;                       #<class> 
-;                       (
-;                         #(struct:recur lk) 
-;                         #(struct:recur rk) 
-;                         (choose 
-;                           #(struct:eval (self . puff)) 
-;                           #(struct:eval (self . pie))
-;                         )
-;                       )
-;                     ) 
-;                     #(struct:visitor 
-;                       #<class> 
-;                       (
-;                         (choose 
-;                           #(struct:eval (self . puff)) 
-;                           #(struct:eval (self . pie))
-;                         )
-;                       )
-;                     )
-;                   )
-;                 )
-(define schedule (instantiate-sketch G S))
+(define schedule (instantiate-sketch G S num-dirty))
 ; (printf "> schedule is:\n~a\n" schedule)
 
 (for ([e (reverse E)])
 ; (for ([e (cdr (reverse E))])
 	; ae: (struct tree (class fields readys children) #:mutable #:transparent)
 	;   | all struct members are currently filled
-	;   | e.g., #(struct:tree 
-	;             #<class> 
-	;             (
-	;               (puff . #(struct:slot #f)) 
-	;               (pie . #(struct:slot #f))
-	;             ) 
-	;             (
-	;               (puff . #(struct:slot #f)) 
-	;               (pie . #(struct:slot #f))
-	;             )
-	;             () --> no children
-	;           )
 	; (printf "> tree is:\n~a\n" (inspect-tree e))
 
 	(define ae (tree-annotate e))
@@ -160,12 +126,20 @@
 
 	; (pause)
 )
+(define cost (apply + (get-cost)))
+(printf "cost ~a\n" cost)
 
-(define sol (solve (assert #t)))
+
+(output-smt "incr")
+
+(define sol (optimize #:minimize (list cost) #:guarantee #t))
+; (define sol (solve (assert #t)))
 (if (sat? sol)
 	(begin
 		(printf "> SAT\n")
-		(printf (string-replace (schedule->string schedule idict sol) "\n\n" "\n"))
+		(printf "> cost: ~a\n" (evaluate cost sol))
+		(define schedule-solved (schedule->solved idict sol wcdict schedule))
+		(printf (string-replace (schedule->string schedule-solved idict sol) "\n\n" "\n"))
 		(printf "\n")
 		(match-let-values ([(nodes variables) (formula-size)])
 			(printf "Constraint Size: ~a nodes and ~a variables\n" nodes variables)

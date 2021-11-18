@@ -228,6 +228,9 @@
 	(apply + (vector->list vec))
 )
 
+(define (list-sum l)
+	(apply + l))
+
 (struct matrix (height width rows) #:transparent) ; row-major vector representation
 
 (define (build-matrix n m f)
@@ -248,6 +251,10 @@
 
 (define (matrix-ref mat i j)
 	(vector-ref (vector-ref (matrix-rows mat) i) j)
+)
+
+(define (matrix-set! mat i j x)
+	(vector-set! (vector-ref (matrix-rows mat) i) j x)
 )
 
 (define (matrix-transpose mat)

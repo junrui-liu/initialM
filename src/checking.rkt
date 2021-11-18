@@ -19,7 +19,7 @@
 	interpret
 	idict
 	wcdict
-	wc-sum
+	get-cost
 )
 
 ; Activate an ILP solver (IBM CPLEX if available, otherwise Z3 in ILP mode)
@@ -55,10 +55,14 @@
 		(hash-ref wcdict nth)
 		(begin
 			(define m
-				(list->vector (for/list ([i (range (length bits))])
+				(list->vector (for/list ([i (range (vector-length bits))])
 					(bit*))))
 			(hash-set! wcdict nth m)
 			(hash-ref wcdict nth))))
+
+(define cost null)
+(define (get-cost) cost)
+(define (set-cost! c) (set! cost (cons c cost)))
 
 (define (wc-sum)
 		(for/list ([i (range wc-counter)])
@@ -103,7 +107,7 @@
 	(for ([command (ag:visitor-commands visitor)])
 		(ex:eval command trav self class)))
 
-(define (ex:eval command trav self class #:curr-wc [wc #f])
+(define (ex:eval command trav self class)
 	(match command
 			[(ag:recur child)
 				(define subtree (tree-ref/child self child))
@@ -119,10 +123,85 @@
 			]
 			[(ag:when (list 'wcchoose nth bits) commands)
 				(define wcmat (get-wcmat nth bits))
-				(printf "~a\n" wcmat)
-				(assert (apply || (map (lambda (b) (< 0 b)) (vector->list wcmat))) "at least one dirty bit in condition")
+				; (printf "~a\n" wcmat)
 				(for ([command commands])
-					(ex:eval command trav self class #:curr-wc wcmat))
+					(ex:eval command trav self class))
+
+				; assert body of each when is non-empty
+				; (assert (apply || (for/list ([command commands])
+				; 	(match command
+				; 	[(list 'multichoose nth vs ...)
+				; 		(define imat (get-imat nth vs))
+				; 		(apply || (for/list ([ev imat]) (not (null? ev))))]))) "body not empty")
+
+				; assert cond
+				; (for ([command commands])
+				; 	(match command
+				; 	[(list 'multichoose nth vs ...)
+				; 		(define imat (get-imat nth vs))
+				; 		(for ([ev imat])
+				; 			(if (null? ev) (void)
+				; 			(begin
+				; 				(define ev-attr (ag:eval-attribute ev))
+				; 				(define ev-rule (ag:class-ref*/rule class ev-attr))
+				; 				(define ev-rule-id (ag:rule-id ev-rule))
+				; 				(define a (ag:class-allocation class))
+				; 				(define m (dirty:allocation-map a))
+				; 				(define rhs-m (ag:class-dependency-matrix class))
+				; 				(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
+				; 				(for ([attr-i (range (vector-length rhs))])
+				; 					(if (vector-ref rhs attr-i)
+				; 						(for ([j bits])
+				; 							(if (< 0 (matrix-ref m attr-i j))
+				; 								(begin
+				; 									; (printf "attr-i: ~a j: ~a assert: ~a\n" attr-i j (< 0 (vector-ref wcmat j)))
+				; 									(assert (< 0 (vector-ref wcmat j))))
+				; 								(void)))
+				; 						(void))))))]))
+				
+				(set-cost!
+					(apply + (for/list ([j bits]) ; choose a true dirty bit
+							(define wc-bit (vector-ref wcmat j))
+							; (printf "bit ~a: ~a\n" j wc-bit)
+								(begin
+										(apply + (for/list ([command commands])
+											(match command
+												[(list 'multichoose nth vs ...)
+													(define imat (get-imat nth vs))
+													; (printf "nth: ~a\n" nth)
+													(apply + (for/list ([ev imat])
+														(if (null? ev)
+															(begin
+																; (printf "do nothing\n")
+																0) ; do nothing
+															(begin ; else this is a rule
+																; (printf "do something: ~a\n" ev)
+																(define ev-attr (ag:eval-attribute ev))
+																(define ev-rule (ag:class-ref*/rule class ev-attr))
+																(define ev-rule-id (ag:rule-id ev-rule))
+																(define a (ag:class-allocation class))
+																(define m (dirty:allocation-map a))
+																(define rhs-m (ag:class-dependency-matrix class))
+																(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
+																(define spurious
+																	(apply && 
+																		(for/list ([attr-i (range (vector-length rhs))])
+																			(define is-on-rhs (vector-ref rhs attr-i))
+																			(define diff-dirty (= 0 (matrix-ref m attr-i j))) ; not assigned to dirty bit j
+																			; (printf "is-on-rhs: ~a diff-dirty: ~a\n" is-on-rhs diff-dirty)
+																			(=> is-on-rhs diff-dirty)))) 
+																; (printf "spurious: ~a\n" spurious)
+																(if (&& (< 0 wc-bit) spurious) 1 0)))))])))))))
+										
+				; (printf "cost: ~a\n" (get-cost))
+				
+				; 		(printf "command: ~a\n" command)
+				; 		(define spurious #f)
+				; 		(ex:check-spurious command trav self class)
+				; 		(if spurious
+				; 			(void)
+				; 			(void)))
+				; 			; )
 				(void)]
 			[(ag:skip)
 				(void)]
@@ -135,17 +214,17 @@
 					(if (null? ev)
 						(void) ; do nothing
 						; else this is a rule
-						(check-eval ev self class #:curr-wc wc)))]
-			[(ag:eval ev) (check-eval command self class #:curr-wc wc)]
+						(check-eval ev self class)))]
+			[(ag:eval ev) (check-eval command self class)]
 			[_ (println-and-exit "# exception/traverse: unknown command ~a\n" command)]))
 
-(define (check-eval ev self class #:curr-wc [wc #f])
+(define (check-eval ev self class)
 	(define ev-attr (ag:eval-attribute ev))
 	(define ev-rule (ag:class-ref*/rule class ev-attr))
 	(define ev-ready (^tree-select/ready self ev-attr))
 	(assert (! (ag:slot-v ev-ready)) "before:write-to")
 	(define ev-field (^tree-select/field self ev-attr))
-	(define ev-res (evaluate self class (ag:rule-formula ev-rule) #:curr-wc wc))
+	(define ev-res (evaluate self class (ag:rule-formula ev-rule)))
 	(ag:set-slot-v! ev-field ev-res)
 	(ag:set-slot-v! ev-ready #t)
 	(assert (ag:slot-v ev-ready) "after:write-to"))
@@ -244,7 +323,7 @@
 
 
 
-(define (evaluate self class term #:iterator [iter #f] #:cursor [cur #f] #:accumulator [acc #f] #:curr-wc [wc #f])
+(define (evaluate self class term #:iterator [iter #f] #:cursor [cur #f] #:accumulator [acc #f])
 	(define (recur term)
 		(cond
 			[(union? term)
@@ -259,21 +338,12 @@
 					]
 					[(ag:field (cons node fld))
 						(define attr (cons node fld))
-						(define a (ag:class-allocation class))
-						(define m (dirty:allocation-map a))
-						(define bits (dirty:allocation-bits a))
-						(define attrs (dirty:allocation-attributes a))
-						(define attr-ass (dirty:allocation-attr-ass a))
-						(define i (^ass-ref attr-ass fld))
-						; (printf "field: ~a i-th: ~a\n" fld i)
-						(if wc
-							(begin
-								(for ([k bits])
-									; (printf "wc: ~a ~a ~a\n" wc (if wc #t #f) (matrix-ref m i k))
-									(assert (=> (< 0 (matrix-ref m i k)) (< 0 (vector-ref wc k))) (format "bit ~a used" k))
-									; (print-assert)
-									))
-							(void))
+						; (define a (ag:class-allocation class))
+						; (define m (dirty:allocation-map a))
+						; (define bits (dirty:allocation-bits a))
+						; (define attrs (dirty:allocation-attributes a))
+						; (define attr-ass (dirty:allocation-attr-ass a))
+
 						(define ev-ready (^tree-select/ready self attr #:iterator iter #:cursor cur))
 						(assert (ag:slot-v ev-ready) "before:read-from/field")
 						(define ev-field (^tree-select/field self attr #:iterator iter #:cursor cur))

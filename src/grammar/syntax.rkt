@@ -34,7 +34,7 @@
 (struct trait (name body) #:transparent)
 
 ; class definition
-(struct class (name [interface #:mutable] [traits #:mutable] body [counters #:mutable #:auto] [allocation #:mutable #:auto]) #:auto-value #f)
+(struct class (name [interface #:mutable] [traits #:mutable] body [counters #:mutable #:auto] [allocation #:mutable #:auto] [dependency-matrix #:mutable #:auto]) #:auto-value #f)
 
 ; class/trait body
 (struct body (children labels rules))
@@ -50,7 +50,7 @@
 (struct label/out label ())
 
 ; rule definition
-(struct rule (attribute formula [iteration #:mutable #:auto]) #:auto-value #f #:transparent)
+(struct rule (attribute formula [iteration #:mutable #:auto] [id #:mutable #:auto]) #:auto-value #f #:transparent)
 (define rule-object (compose car rule-attribute))
 (define rule-field (compose cdr rule-attribute))
 

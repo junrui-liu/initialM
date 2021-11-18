@@ -348,7 +348,7 @@
            (list->string visitor->string visitors))])
 
 (define/match (visitor->string visitor)
-  [((ag:visitor (ag:class class-name _ _ _ _ _) commands))
+  [((ag:visitor (ag:class class-name _ _ _ _ _ _) commands))
    (format "\n  case ~a {~a\n  }"
            class-name
            (list->string command->string commands))])
@@ -394,7 +394,7 @@
                (list->string label->string labels)))])
 
 (define/match (class->string class)
-  [((ag:class name interface traits body _ _))
+  [((ag:class name interface traits body _ _ _))
    (format "\n\nclass ~a~a : ~a ~a"
            name
            (if (null? traits)
@@ -435,7 +435,7 @@
    (format "\n    ~a : [~a];" name (identify-interface interface))])
 
 (define/match (rule->string rule)
-  [((ag:rule attr formula _))
+  [((ag:rule attr formula _ _))
    (format "\n    ~a := ~a;"
            (attribute->string attr)
            (formula->string formula))])

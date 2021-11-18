@@ -7,14 +7,14 @@
 
 (define/match (contextualize item)
   [((ag:interface name _ _)) (format "in interface '~a'" name)]
-  [((ag:class name _ _ _ _ _)) (format "in class '~a'" name)]
+  [((ag:class name _ _ _ _ _ _)) (format "in class '~a'" name)]
   [((ag:trait name _)) (format "in trait '~a'" name)]
   [((ag:traversal name _)) (format "in traversal '~a'" name)]
   [((ag:child/one name _)) (format "on scalar child '~a'" name)]
   [((ag:child/seq name _)) (format "on vector child '~a'" name)]
   [((ag:label name _)) (format "for label '~a'" name)]
-  [((ag:rule attr _ #f)) (format "in scalar rule for '~a'" (ag:attribute->string attr))]
-  [((ag:rule attr _ (? symbol?))) (format "in vector rule for '~a'" (ag:attribute->string attr))])
+  [((ag:rule attr _ #f _)) (format "in scalar rule for '~a'" (ag:attribute->string attr))]
+  [((ag:rule attr _ (? symbol?) _)) (format "in vector rule for '~a'" (ag:attribute->string attr))])
 
 (define context
   (make-parameter null (λ (item) (cons (contextualize item) (context)))))

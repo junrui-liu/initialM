@@ -135,29 +135,29 @@
 				; 		(apply || (for/list ([ev imat]) (not (null? ev))))]))) "body not empty")
 
 				; assert cond
-				; (for ([command commands])
-				; 	(match command
-				; 	[(list 'multichoose nth vs ...)
-				; 		(define imat (get-imat nth vs))
-				; 		(for ([ev imat])
-				; 			(if (null? ev) (void)
-				; 			(begin
-				; 				(define ev-attr (ag:eval-attribute ev))
-				; 				(define ev-rule (ag:class-ref*/rule class ev-attr))
-				; 				(define ev-rule-id (ag:rule-id ev-rule))
-				; 				(define a (ag:class-allocation class))
-				; 				(define m (dirty:allocation-map a))
-				; 				(define rhs-m (ag:class-dependency-matrix class))
-				; 				(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
-				; 				(for ([attr-i (range (vector-length rhs))])
-				; 					(if (vector-ref rhs attr-i)
-				; 						(for ([j bits])
-				; 							(if (< 0 (matrix-ref m attr-i j))
-				; 								(begin
-				; 									; (printf "attr-i: ~a j: ~a assert: ~a\n" attr-i j (< 0 (vector-ref wcmat j)))
-				; 									(assert (< 0 (vector-ref wcmat j))))
-				; 								(void)))
-				; 						(void))))))]))
+				(for ([command commands])
+					(match command
+					[(list 'multichoose nth vs ...)
+						(define imat (get-imat nth vs))
+						(for ([ev imat])
+							(if (null? ev) (void)
+							(begin
+								(define ev-attr (ag:eval-attribute ev))
+								(define ev-rule (ag:class-ref*/rule class ev-attr))
+								(define ev-rule-id (ag:rule-id ev-rule))
+								(define a (ag:class-allocation class))
+								(define m (dirty:allocation-map a))
+								(define rhs-m (ag:class-dependency-matrix class))
+								(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
+								(for ([attr-i (range (vector-length rhs))])
+									(if (vector-ref rhs attr-i)
+										(for ([j bits])
+											(if (< 0 (matrix-ref m attr-i j))
+												(begin
+													; (printf "attr-i: ~a j: ~a assert: ~a\n" attr-i j (< 0 (vector-ref wcmat j)))
+													(assert (< 0 (vector-ref wcmat j))))
+												(void)))
+										(void))))))]))
 				
 				(set-cost!
 					(apply + (for/list ([j bits]) ; choose a true dirty bit

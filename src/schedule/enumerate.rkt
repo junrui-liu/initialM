@@ -144,10 +144,9 @@
     (define rule (list-ref rules i))
     (for ([attr (ag:term-rhs (ag:rule-formula rule))])
       (define j (cdr (assoc attr attr-ass)))
-      ; (printf "rule: ~a attr: ~a (~a)\n" rule attr j)
       (matrix-set! m i j #t)))
-  (printf "~a\n" m)
   m)
+
   
 
 ; Instantiate a schedule sketch for an attribute grammar G, given an

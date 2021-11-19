@@ -134,7 +134,8 @@
 				; 		(define imat (get-imat nth vs))
 				; 		(apply || (for/list ([ev imat]) (not (null? ev))))]))) "body not empty")
 
-				; assert cond
+				; assert dirty bits chosen in the condition
+				; must be used by some rhs in the body
 				(for ([command commands])
 					(match command
 					[(list 'multichoose nth vs ...)
@@ -150,58 +151,43 @@
 								(define rhs-m (ag:class-dependency-matrix class))
 								(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
 								(for ([attr-i (range (vector-length rhs))])
-									(if (vector-ref rhs attr-i)
+									(if (vector-ref rhs attr-i) ; attribute attr-i is on the rhs of this rule
 										(for ([j bits])
-											(if (< 0 (matrix-ref m attr-i j))
+											(if (< 0 (matrix-ref m attr-i j)) ; dirty bit j controls this attribute
 												(begin
-													; (printf "attr-i: ~a j: ~a assert: ~a\n" attr-i j (< 0 (vector-ref wcmat j)))
-													(assert (< 0 (vector-ref wcmat j))))
+													(assert (< 0 (vector-ref wcmat j)))) ; assert dirty bit j is chosen in the guard
 												(void)))
 										(void))))))]))
 				
 				(set-cost!
-					(apply + (for/list ([j bits]) ; choose a true dirty bit
-							(define wc-bit (vector-ref wcmat j))
-							; (printf "bit ~a: ~a\n" j wc-bit)
-								(begin
-										(apply + (for/list ([command commands])
-											(match command
-												[(list 'multichoose nth vs ...)
-													(define imat (get-imat nth vs))
-													; (printf "nth: ~a\n" nth)
-													(apply + (for/list ([ev imat])
-														(if (null? ev)
-															(begin
-																; (printf "do nothing\n")
-																0) ; do nothing
-															(begin ; else this is a rule
-																; (printf "do something: ~a\n" ev)
-																(define ev-attr (ag:eval-attribute ev))
-																(define ev-rule (ag:class-ref*/rule class ev-attr))
-																(define ev-rule-id (ag:rule-id ev-rule))
-																(define a (ag:class-allocation class))
-																(define m (dirty:allocation-map a))
-																(define rhs-m (ag:class-dependency-matrix class))
-																(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
-																(define spurious
-																	(apply && 
-																		(for/list ([attr-i (range (vector-length rhs))])
-																			(define is-on-rhs (vector-ref rhs attr-i))
-																			(define diff-dirty (= 0 (matrix-ref m attr-i j))) ; not assigned to dirty bit j
-																			; (printf "is-on-rhs: ~a diff-dirty: ~a\n" is-on-rhs diff-dirty)
-																			(=> is-on-rhs diff-dirty)))) 
-																; (printf "spurious: ~a\n" spurious)
-																(if (&& (< 0 wc-bit) spurious) 1 0)))))])))))))
-										
-				; (printf "cost: ~a\n" (get-cost))
-				
-				; 		(printf "command: ~a\n" command)
-				; 		(define spurious #f)
-				; 		(ex:check-spurious command trav self class)
-				; 		(if spurious
-				; 			(void)
-				; 			(void)))
-				; 			; )
+					; outmost sum: for each dirty bit, pretend it was (the only bit) flipped to true
+					(apply + (for/list ([j bits])
+						; symbolic var that denotes "this dirty bit is chosen in the condition"
+						(define wc-bit (vector-ref wcmat j))
+							(apply + (for/list ([command commands]) ; we know when's body has to be ??
+								(match command
+									[(list 'multichoose nth vs ...)
+										(define imat (get-imat nth vs))
+										(apply + (for/list ([ev imat])
+											(if (null? ev)
+												0 ; no cost
+												(begin ; else this is a rule
+													(define ev-attr (ag:eval-attribute ev))
+													(define ev-rule (ag:class-ref*/rule class ev-attr))
+													(define ev-rule-id (ag:rule-id ev-rule))
+													(define a (ag:class-allocation class))
+													(define m (dirty:allocation-map a))
+													(define rhs-m (ag:class-dependency-matrix class))
+													(define rhs (vector-ref (matrix-rows rhs-m) ev-rule-id))
+													(define spurious
+														(apply &&
+															(for/list ([attr-i (range (vector-length rhs))])
+															  ; attr-i is on the rhs of the current rule
+																(define is-on-rhs (vector-ref rhs attr-i))
+																; attr-i is not assigned to dirty bit j
+																(define diff-dirty (= 0 (matrix-ref m attr-i j)))
+																(=> is-on-rhs diff-dirty))))
+													(if (&& (< 0 wc-bit) spurious) 1 0)))))]))))))
 				(void)]
 			[(ag:skip)
 				(void)]

@@ -132,8 +132,11 @@
 
 (output-smt "incr")
 
+
+
 (define sol (optimize #:minimize (list cost) #:guarantee #t))
-; (define sol (solve (assert #t)))
+; (assert (> 120 cost))
+; (define sol (time (solve (assert #t))))
 (if (sat? sol)
 	(begin
 		(printf "> SAT\n")

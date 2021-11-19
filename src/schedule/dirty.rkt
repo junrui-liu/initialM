@@ -19,9 +19,8 @@
       (if assignment
         (begin
           (for ([row assignment])
-            (printf "assignment*/row: ~a\n" row)
             (for ([attr row])
-              (assert (member attr attributes) (format "~a is not an attribute" attr))))
+              (printf "warning: ~a is not an attribute" attr)))
           (build-matrix n k (lambda (i j)
             (let ([j-attrs (list-ref assignment j)]
                   [i-attr (list-ref attributes i)])

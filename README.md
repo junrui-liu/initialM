@@ -1,10 +1,51 @@
-## initialH: Experimental Tree Traversal Synthesis
+## Hecate: Tree Traversal Synthesis Using Domain-Specific Symbolic Compilation
 
-### Domain-Specific Encoding
+This branch (`master`) is the implementation of domain-specific encoding.
 
-(The `tracing`/`master` branch: domain-specific encoding.)
+### Prerequisites
 
-### Benchmark Commands
+- Racket 7.7 ([https://download.racket-lang.org/releases/7.7/](https://download.racket-lang.org/releases/7.7/))
+
+- Rosette 3.2 ([https://github.com/emina/rosette](https://github.com/emina/rosette))
+
+  - To install Rosette 3.2, you need to install from source:
+
+    ```bash
+    git clone https://github.com/emina/rosette.git
+    raco pkg remove rosette
+    cd rosette/
+    git checkout c092b65
+    raco pkg install
+    ```
+
+### ASPLOS Commands for Artifact Evaluation
+
+This reproduces the `HECATE` column of Table 1:
+
+```bash
+# binary-tree.grammar
+racket ./run.rkt --root Root fuse benchmarks/grafter/binary-tree.grammar
+
+# fmm.grammar (this needs full examples)
+racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/fmm.grammar
+
+# piecewise series
+racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp1.grammar
+racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp2.grammar
+racket ./run.rkt --root VirtualRoot fuse benchmarks/grafter/piecewise-exp3.grammar
+
+# ast (this needs full examples, which takes a long time)
+racket ./run.rkt --root Program fuse benchmarks/grafter/ast.grammar
+
+# render (this needs full examples)
+racket ./run.rkt --root Document fuse benchmarks/grafter/render.grammar
+```
+
+Note: add timing commands to record time usage, e.g., `time` in Linux.
+
+### Other Commands
+
+This includes all commands for both evaluation and debugging.
 
 ```bash
 # render-toy-vector.grammar

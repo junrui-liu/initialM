@@ -32,6 +32,33 @@
                   (map string-trim (string-split S0 ";"))))))
   (foldr ag:sequential (first traversals) (rest traversals)))
 
+; (command-line
+;  #:program "synthesize"
+;  #:once-each
+;  ;[("-v" "--verbose") "Display verbose intermediate information"
+;  ;                    (verbose? #t)]
+;  [("-R" "--root") classname "Class to use as tree root"
+;                   (*root* (string->symbol classname))]
+;  [("-o" "--out") filename "File to output generated code"
+;                   (*output* filename)]
+;  #:args (schedule-sketch grammar-filename)
+;  (let* ([G (parse-grammar grammar-filename)]
+;         [E (tree-examples G (*root*))]
+;         [temp (printf "> generated ~a tree examples\n" (length E))]
+;         [temp0 (printf "> first tree looks like: ~a\n" (car E))]
+;         [temp0 (printf "> all trees look like: ~a\n" E)]
+;         ; [temp0 (printf "> inspect first tree: ~a\n" (inspect-tree (car E)))]
+;         [S (parse-schedule-sketch G schedule-sketch)]
+;         [S* (complete-sketch G S E)])
+;    (when S*
+;      (displayln (string-replace (schedule->string S*) "\n\n" "\n"))
+;      (let ([P (generate-program G S*)]
+;            [file (if (equal? (*output*) "-")
+;            		(current-output-port)
+;            		(open-output-file (*output*) #:mode 'text #:exists 'replace))])
+;        (parameterize ([current-output-port file])
+;          (print-program P))))))
+
 (command-line
  #:program "synthesize"
  #:once-each
@@ -53,8 +80,11 @@
    (when S*
      (displayln (string-replace (schedule->string S*) "\n\n" "\n"))
      (let ([P (generate-program G S*)]
-           [file (if (equal? (*output*) "-")
-           		(current-output-port)
-           		(open-output-file (*output*) #:mode 'text #:exists 'replace))])
-       (parameterize ([current-output-port file])
-         (print-program P))))))
+           ; [file (if (equal? (*output*) "-")
+           ;    (current-output-port)
+           ;    (open-output-file (*output*) #:mode 'text #:exists 'replace))]
+          )
+       ; (parameterize ([current-output-port file])
+       ;   (print-program P))
+       (void)
+       ))))

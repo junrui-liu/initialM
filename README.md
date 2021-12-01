@@ -18,6 +18,10 @@ This branch (`master`) is the implementation of domain-specific encoding.
     raco pkg install
     ```
 
+- IBM CPLEX ([https://www.ibm.com/analytics/cplex-optimizer](https://www.ibm.com/analytics/cplex-optimizer))
+  - Note that a trial/free version of CPLEX may result in error in solving some constraints because of its preset limitation. You need a full or academic version (see [https://www.ibm.com/academic/topic/data-science](https://www.ibm.com/academic/topic/data-science)).
+  - Hecate's domain-specific version can still run without CPLEX, but you may experience some slowdown in solving time, depending on different machines.
+
 ### ASPLOS Commands for Artifact Evaluation
 
 This reproduces the `HECATE` column of Table 1:

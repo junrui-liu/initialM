@@ -19,7 +19,7 @@
 (define-empty-tokens e-tkns
   (RBRACE LBRACE LPAREN RPAREN LBRACKET RBRACKET
    COLON SEMICOLON COMMA DOT
-   TRAVERSAL CASE ITERATE REVERSE RECUR CALL EVAL SKIP HOLE
+   TRAVERSAL CASE ITERATE REVERSE RECUR CALL EVAL SKIP HOLE WHEN CHOLE
    INTERFACE CLASS TRAIT
    CHILDREN ATTRIBUTES STATEMENTS RULES
    INPUT OUTPUT
@@ -95,6 +95,8 @@
    ["eval" (token-EVAL)]
    ["skip" (token-SKIP)]
    ["??" (token-HOLE)]
+   ["when" (token-WHEN)]
+   ["?" (token-CHOLE)]
    ["interface" (token-INTERFACE)]
    ["class" (token-CLASS)]
    ["trait" (token-TRAIT)]
@@ -190,6 +192,7 @@
     (command
      ((ITERATE name LBRACE command-list RBRACE) (ag:iter/left $2 $4))
      ((REVERSE name LBRACE command-list RBRACE) (ag:iter/right $2 $4))
+     ((WHEN CHOLE LBRACE command-list RBRACE)   (ag:when null $4))
      ((RECUR name SEMICOLON) (ag:recur $2))
      ((EVAL reference SEMICOLON) (ag:eval $2))
      ((SKIP SEMICOLON) (ag:skip))
@@ -309,6 +312,7 @@
      ((CALL) 'call)
      ((EVAL) 'eval)
      ((SKIP) 'skip)
+     ((WHEN) 'when)
      ((INTERFACE) 'interface)
      ((CLASS) 'class)
      ((TRAIT) 'trait)
@@ -360,6 +364,9 @@
            (list->string iterated-command->string commands))]
   [((ag:recur child))
    (format "\n    recur ~a;" child)]
+  [((ag:when condition commands))
+   (format "\n    when ? {~a\n    }"
+           (list->string iterated-command->string commands))]
   [((ag:eval (cons object label)))
    (format "\n    eval ~a.~a;" object label)]
   [((ag:hole)) "\n    ??;"]

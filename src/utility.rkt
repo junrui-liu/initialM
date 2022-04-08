@@ -175,3 +175,23 @@
 (define-match-expander symbol
   (syntax-rules ()
     [(symbol id) (? symbol? id)]))
+
+
+(define (enumerate l)
+  (for/list ([i (range (length l))])
+    (cons i (list-ref l i))))
+
+(define (cr k xs)
+  (if (= k (length xs))
+    (list xs)
+    (match xs
+      [(cons y ys)
+        (append (map ((curry cons) y) (cr (- k 1) ys))
+                (cr k ys))]
+      [_ (list)])))
+
+(define (fill k slots)
+  (if (= 1 slots)
+      (list (list k))
+      (apply append (for/list ([i (in-range (+ k 1))])
+        (map ((curry cons) i) (fill (- k i) (- slots 1)))))))

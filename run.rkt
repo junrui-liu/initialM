@@ -17,6 +17,8 @@
 ;(define verbose? (make-parameter #f))
 (define *root* (make-parameter 'Root))
 (define *output* (make-parameter #f))
+(define non-incr? (make-parameter #f))
+(define meta? (make-parameter #f))
 
 (define (parse-grammar filename)
   (let ([G (file->grammar filename)])
@@ -33,22 +35,7 @@
   (foldr ag:sequential (first traversals) (rest traversals)))
 
 ; (command-line
-;  #:program "synthesize"
-;  #:once-each
-;  ;[("-v" "--verbose") "Display verbose intermediate information"
-;  ;                    (verbose? #t)]
-;  [("-R" "--root") classname "Class to use as tree root"
-;                   (*root* (string->symbol classname))]
-;  [("-o" "--out") filename "File to output generated code"
-;                   (*output* filename)]
-;  #:args (schedule-sketch grammar-filename)
-;  (let* ([G (parse-grammar grammar-filename)]
-;         [E (tree-examples G (*root*))]
-;         [temp (printf "> generated ~a tree examples\n" (length E))]
-;         [temp0 (printf "> first tree looks like: ~a\n" (car E))]
-;         [temp0 (printf "> all trees look like: ~a\n" E)]
-;         ; [temp0 (printf "> inspect first tree: ~a\n" (inspect-tree (car E)))]
-;         [S (parse-schedule-sketch G schedule-sketch)]
+; ...
 ;         [S* (complete-sketch G S E)])
 ;    (when S*
 ;      (displayln (string-replace (schedule->string S*) "\n\n" "\n"))
@@ -64,6 +51,8 @@
  #:once-each
  ;[("-v" "--verbose") "Display verbose intermediate information"
  ;                    (verbose? #t)]
+ [("-n" "--non-incr") "Non-incremental mode" (non-incr? #t)]
+ [("-m" "--meta") "Enumerate based on meta-sketch" (meta? #t)]
  [("-R" "--root") classname "Class to use as tree root"
                   (*root* (string->symbol classname))]
  [("-o" "--out") filename "File to output generated code"
@@ -75,16 +64,21 @@
         [temp0 (printf "> first tree looks like: ~a\n" (car E))]
         [temp0 (printf "> all trees look like: ~a\n" E)]
         ; [temp0 (printf "> inspect first tree: ~a\n" (inspect-tree (car E)))]
-        [S (parse-schedule-sketch G schedule-sketch)]
-        [S* (complete-sketch G S E)])
-   (when S*
-     (displayln (string-replace (schedule->string S*) "\n\n" "\n"))
-     (let ([P (generate-program G S*)]
+        [S (parse-schedule-sketch G schedule-sketch)])
+    (if (meta?)
+      (enumerate-from-meta G S)
+      (if (non-incr?)
+        (complete-sketch-non-incr G S E)
+        (complete-sketch G S E))
+      )))
+
+    ;  (let ([P (generate-program G S*)]
+      ;  (void)
+      ;  ))))
+
            ; [file (if (equal? (*output*) "-")
            ;    (current-output-port)
            ;    (open-output-file (*output*) #:mode 'text #:exists 'replace))]
-          )
+          ; )
        ; (parameterize ([current-output-port file])
        ;   (print-program P))
-       (void)
-       ))))

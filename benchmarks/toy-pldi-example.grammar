@@ -1,0 +1,33 @@
+traversal layout {
+  case Inner {
+    when ? { ??; }
+    when ? { ??; }
+  }
+}
+
+interface Inner {
+  // input
+  input widthMode : int;
+  input widthAbs : int;
+  input ratio : int;
+  // inherited
+  input pFont : int;
+  input pWidth : int;
+  // computed
+  output widthRel : int;
+  output font : int;
+  output width : int;
+}
+
+class Inner : Inner {
+  children {}
+  rules {
+    self.font := self.pFont;
+    self.widthRel := self.pWidth * self.ratio;
+    self.width :=
+      if isABS(self.widthMode) then
+        self.widthAbs
+      else
+        self.widthRel;
+  }
+}

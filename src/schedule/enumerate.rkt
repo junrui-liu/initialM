@@ -5,6 +5,7 @@
 (provide *multichoose*
          instantiate-sketch
          enumerate-sketches
+         enumerate-incr-sketches
          synthesize-schedules)
 
 (define *multichoose* (make-parameter (curry list 'choose)))
@@ -31,6 +32,11 @@
        (for/list ([slot slots])
          (instantiate-command-sketch class slot 'right child)))
      (ag:iter/right child steps)]
+    [(ag:when condition slots)
+      (define steps
+       (for/list ([slot slots])
+         (instantiate-command-sketch class slot order iterator)))
+      (ag:when condition steps)]
     [(ag:hole)
      (let ([range (enumerate-commands class #:order order #:iterator iterator)])
        (apply multichoose range))]
@@ -55,17 +61,30 @@
 ; symbolc schedule.
 (define (instantiate-sketch G sketch)
   (match sketch
-    ;;; [(ag:sequential left-sched right-sched)
-    ;;;  (ag:sequential (instantiate-sketch G left-sched)
-    ;;;                 (instantiate-sketch G right-sched))]
-    ;;; [(ag:parallel left-sched right-sched)
-    ;;;  (ag:parallel (instantiate-sketch G left-sched)
-    ;;;               (instantiate-sketch G right-sched))]
     [(ag:traverse order)
-     (instantiate-traversal-sketch G (ag:grammar-ref/traversal G order))]
-    ;;; [(ag:traversal order visitors)
-    ;;;  (instantiate-traversal-sketch G sketch)]
-     ))
+     (instantiate-traversal-sketch G (ag:grammar-ref/traversal G order))]))
+
+(define (enumerate-incr-traversal-sketch G traversal granularity)
+  ; (define visitors
+    ; (for/list ([visitor (ag:traversal-visitors traversal)])
+    ;   (define class (ag:visitor-class visitor))
+    ;   (define class-granularity (hash-ref granularity (ag:class-name class)))
+    ;   (define commands (ag:visitor-commands visitor))
+    ;   (define meta-choose (length (filter ag:hole? commands)))
+    ;   (for/list ([f fill ))
+    ;   (printf "class: ~a\tgranularity: ~a\tmeta-choose: ~a\n" (ag:class-name class) class-granularity meta-choose)))
+  (void))
+      ; (ag:visitor (ag:visitor-class visitor)
+      ;             (map (curry instantiate-command-sketch class)
+      ;                  (ag:visitor-commands visitor)))))
+
+  ; (ag:traversal (ag:traversal-name traversal) visitors))
+
+(define (enumerate-incr-sketches G sketch granularity)
+  (match sketch
+    [(ag:traverse order)
+     (enumerate-incr-traversal-sketch G (ag:grammar-ref/traversal G order) granularity)]))
+
 
 ; Enumerate schedule sketches for an attribute grammar G, bounded by the number
 ; of traversal passes up to n.

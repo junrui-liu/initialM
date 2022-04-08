@@ -1,0 +1,102 @@
+traversal layout {
+    case Block {
+       when ? { ??; }
+       when ? { ??; }
+       when ? { ??; }
+    }
+}
+
+interface LayoutBox {
+    // container box
+    input container.width : Pixels;
+
+    // padding edges (computed)
+    output padding.left : Pixels;
+    output padding.right : Pixels;
+    output padding.top : Pixels;
+    output padding.bottom : Pixels;
+
+    // border edges (computed)
+    // output border.left : Pixels;
+    // output border.right : Pixels;
+    // output border.top : Pixels;
+    // output border.bottom : Pixels;
+
+    // margin edges (computed)
+    output margin.left : Pixels;
+    output margin.right : Pixels;
+    output margin.top : Pixels;
+    output margin.bottom : Pixels;
+
+    // difference between intrinsic and container widths
+    output underflow : Pixels;
+
+    // content size (specified)
+    input style.width : Automatic<Pixels>;
+
+    // margin edges (specified)
+    input style.margin.left : Automatic<Pixels>;
+    input style.margin.right : Automatic<Pixels>;
+    input style.margin.top : Automatic<Pixels>;
+    input style.margin.bottom : Automatic<Pixels>;
+
+    // padding edges (specified)
+    input style.padding.left : Pixels;
+    input style.padding.right : Pixels;
+    input style.padding.top : Pixels;
+    input style.padding.bottom : Pixels;
+
+    // border edges (specified)
+    // input style.border.left : Pixels;
+    // input style.border.right : Pixels;
+    // input style.border.top : Pixels;
+    // input style.border.bottom : Pixels;
+
+}
+
+/* display: block */
+class Block : LayoutBox {
+    children {
+    }
+    rules {
+        self.padding.left := self.style.padding.left;
+        self.padding.right := self.style.padding.right;
+        self.padding.top := self.style.padding.top;
+        self.padding.bottom := self.style.padding.bottom;
+        self.margin.top := value(self.style.margin.top); // auto ==> 0
+        self.margin.bottom := value(self.style.margin.bottom); // auto ==> 0
+
+        self.margin.left :=
+            if is_auto(self.style.margin.left) then
+                if is_auto(self.style.width) || self.underflow < 0.0 then
+                    0.0
+                else if is_auto(self.style.margin.right) then
+                    self.underflow / 2.0
+                else
+                    self.underflow
+            else
+                value(self.style.margin.left);
+
+        self.margin.right :=
+            if is_auto(self.style.width) && self.underflow < 0.0 then
+                value(self.style.margin.right) + self.underflow
+            else if is_auto(self.style.margin.right) then
+                if is_auto(self.style.width) then
+                    0.0
+                else if is_auto(self.style.margin.left) then
+                    self.underflow / 2.0
+                else
+                    self.underflow
+            else if !is_auto(self.style.margin.left) || !is_auto(self.style.width) then
+                value(self.style.margin.right) + self.underflow
+            else
+                value(self.style.margin.right);
+        
+        self.underflow :=
+            self.container.width -
+            (value(self.style.margin.left) + value(self.style.margin.right) +
+            //  self.border.left + self.border.right +
+             self.padding.left + self.padding.right +
+             value(self.style.width));
+    }
+}

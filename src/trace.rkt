@@ -8,7 +8,9 @@
          rosette/solver/smt/z3)
 
 (provide permute iter-permuted for*/permuted debug
+         model->subst anew model-eq?
          ref? deref set-ref! break clear
+         permuted
          (rename-out [new-ref ref] [solve-trace solve]))
 
 ; Activate an ILP solver (IBM CPLEX if available, otherwise Z3 in ILP mode)
@@ -26,36 +28,51 @@
 ; List of assumed bit-encoded conditions.
 (define path-condition null)
 
+; List of bits used in permutations
+(define pbits null)
+
 ; Generate a fresh binary integer symbol.
 (define (bit*)
   (define-symbolic* b integer?) ;; either true or false 0/1 ILP
   (assert (<= 0 b 1))
   b)
 
+; Generate a fresh binary integer symbol for permutation.
+(define (pbit*)
+  (define b (bit*))
+  (set! pbits (cons b pbits))
+  b)
+
 ; Symbolic permutation of length at most k
-(struct permuted (guards elements) #:transparent)
+(define next-permuted-i 0)
+(define (next-next-permuted-i)
+  (let ([i next-permuted-i])
+    (set! next-permuted-i (+ next-permuted-i 1))
+    i))
+(struct permuted (guards elements i) #:transparent)
 
 ; Symbolically choose a permutation of length at most k.
 (define (permute k elements)
   (let* ([n (length elements)]
-         [matrix (build-matrix k n (const* bit*))])
+         [matrix (build-matrix k n (const* pbit*))])
     (for ([row (matrix-rows matrix)])
       (assert (<= (vector-sum row) 1))) ; each hole can choose at most one statement
     (for ([column (matrix-columns matrix)])
       (assert (<= (vector-sum column) 1))) ; each statement can be used by at most one hole
-    (permuted matrix elements)))
+    (permuted matrix elements (next-next-permuted-i))))
 
 ; Instantiate a symbolic value (to include a symbolic permutation) according
 ; to a solved model.
-(define (concretize model)
+(define (model->subst model)
   (define (subst value)
     (match value
-      [(permuted guard-matrix elements)
+      [(permuted guard-matrix elements i)
        (for/list ([guards (matrix-rows guard-matrix)]
                   #:when #t
                   [guard guards]
                   [element elements]
                   #:when (= (evaluate guard model) 1))
+          ; (printf "~a -> ~a\n" element i)
          element)]
       [(? list?) (map subst value)]
       [(? vector?) (vector-map subst value)]
@@ -65,7 +82,7 @@
 
 
 ; Opaque, user-facing reference to a location.
-(struct ref (location) #:mutable)
+(struct ref (location) #:mutable #:transparent)
 
 ; Reset the reference for a fresh, disjoint execution path.
 (struct cmd:alloc (ref) #:transparent)
@@ -103,10 +120,14 @@
   ; Evaluate the body for each alternative of the permutation, saving
   ; the resulting residual program frames, duplicating each for each
   ; possible occurrence in a concrete permutation.
+  ; (printf "permuted-elements ~a\n" (permuted-elements perm))
   (let ([blocks (map (residualize do-body) (permuted-elements perm))])
     (for ([guards (matrix-rows (permuted-guards perm))])
+    ; (printf "guards ~a\n" guards)
       (for ([guard guards]
-            [block blocks])
+            [i-block (enumerate blocks)])
+        (match-define (cons i block) i-block)
+        ; (printf "~a attr: ~a\tguard: ~a\n" i (list-ref (permuted-elements perm) i) guard)
         (push! residue (cmd:assume guard block))))
     (flush-residue!)))
 
@@ -204,8 +225,6 @@
       [(cmd:write (ref location))
        (let ([assumption (conjoin* path-condition)])
          (trace-write! location assumption dependency)
-         ;; all perform write over each location in the shared memory. Useless?
-        ;;;  (for-each (curry trace-write! location assumption) shared-dependency)
          )])))
 
 ; Evaluate the accumulated residual program if in a quiescent state
@@ -234,5 +253,34 @@
 ; appropriately sized list of its alternatives.
 (define (solve-trace)
   (let ([model (optimize #:minimize (list (bit*)) #:guarantee #t)])
+    ; (printf "~a\n" pbits)
     ; Extract the solved schedule, a mapping from holes to statements
-    (and (sat? model) (concretize model))))
+    (and (sat? model) model)))
+
+(define (dtrace s x)
+  (printf "~a: ~a\n" s x)
+  x)
+
+
+(define (and* xs)
+  ; (dtrace "and* input" xs)
+  (match xs
+    [(cons x xs) (and x (and* xs))]
+    [_ #t]))
+
+(define (or* xs)
+  ; (dtrace "and* input" xs)
+  (match xs
+    [(cons x xs) (or x (or* xs))]
+    [_ #t]))
+
+(define (anew model)
+  (< 0 
+    (apply +
+    ; the new model isn't m
+      (for/list ([b pbits])
+        (- 1 (evaluate b model))))))
+
+(define (model-eq? m0 m1)
+  (and* (for/list ([b pbits])
+    (= (evaluate b m0) (evaluate b m1)))))

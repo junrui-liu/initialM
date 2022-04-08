@@ -80,6 +80,7 @@
 (struct iter (child commands) #:transparent #:constructor-name make-iter)
 (struct iter/left iter () #:transparent)
 (struct iter/right iter () #:transparent)
+(struct when (condition commands) #:transparent)
 (struct recur (child) #:transparent)
 (struct eval (attribute) #:transparent)
 (struct skip () #:transparent)

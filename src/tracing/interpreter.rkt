@@ -47,24 +47,30 @@
   (define class (tree-class self))
   (define visitor (ag:traversal-ref/visitor trav class))
   (for*/permuted ([command (ag:visitor-commands visitor)])
-    (match command
-      [(ag:recur child)
-       (define subtree (tree-ref/child self child))
-       ;((distribute (curry traverse trav)) subtree)
-       (if (list? subtree)
-           (for ([node subtree])
-             (traverse trav node))
-           (traverse trav subtree))]
-      [(ag:iter/left child commands)
-       (iterate self child identity commands trav)]
-      [(ag:iter/right child commands)
-       (iterate self child reverse commands trav)]
-      [(ag:eval attr)
-       (define rule (ag:class-ref*/rule class attr))
-       (set-box! (tree-select self attr)
-                 (evaluate self (ag:rule-formula rule)))]
-      [(ag:skip)
-       (void)])))
+    (execute command trav self class visitor)))
+
+(define (execute command trav self class visitor)
+  (match command
+    [(ag:recur child)
+      (define subtree (tree-ref/child self child))
+      ;((distribute (curry traverse trav)) subtree)
+      (if (list? subtree)
+          (for ([node subtree])
+            (traverse trav node))
+          (traverse trav subtree))]
+    [(ag:iter/left child commands)
+      (iterate self child identity commands trav)]
+    [(ag:iter/right child commands)
+      (iterate self child reverse commands trav)]
+    [(ag:when condition commands)
+      (for*/permuted ([command commands])
+        (execute command trav self class visitor))]
+    [(ag:eval attr)
+      (define rule (ag:class-ref*/rule class attr))
+      (set-box! (tree-select self attr)
+                (evaluate self (ag:rule-formula rule)))]
+    [(ag:skip)
+      (void)]))
 
 (define (iterate self child order commands trav)
   (define class (tree-class self))

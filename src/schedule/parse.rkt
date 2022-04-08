@@ -166,6 +166,12 @@
        (string-join (map command->string commands) "\n")))
    (format "~aiterate[right] ~a {\n~a\n~a}"
            (indent) child content (indent))]
+  [((ag:when condition commands))
+   (define content
+     (parameterize ([indentation (+ (indentation) 1)])
+       (string-join (map command->string commands) "\n")))
+   (format "~awhen ? {\n~a\n~a}"
+           (indent) content (indent))]
   [((ag:recur child))
    (format "~arecur ~a;" (indent) child)]
   [((ag:eval (cons node label)))
